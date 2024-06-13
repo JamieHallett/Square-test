@@ -1,0 +1,31 @@
+html {
+  height: 100%;
+  width: 100%;
+}
+
+.slider {
+  width: 50%;
+}
+
+#square {
+  height: 50px;
+  width: 50px;
+  position: absolute;
+  background-color: #050505;
+}
+
+#floor {
+  height: 50px;
+  width: 5000px;
+  position: absolute;
+  background-color: #3b3b3b;
+  left: 0px;
+  top: 440px;
+}
+
+.projectile {
+  height: 5px;
+  width: 5px;
+  position: absolute;
+  background-color: #616161;
+}

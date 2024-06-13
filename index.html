@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>square test</title>
+  <link href="./style.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+  <div class="slidecontainer">
+
+    <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
+
+    <span id="slidervalue">50</span>
+
+    <div id="square" class="square"></div>
+
+  </div>
+
+  <div id="floor" class="square"></div>
+    
+  <script src="./script.js"></script>
+  <br>
+  <br>
+  <br>
+  aaa. <!--this is for filler-->
+  <button onmousedown="up=1" onmouseup="up=0">^</button>
+  <noscript>you have no javascript</noscript>
+  <br>
+  <button onmousedown="left=1" onmouseup="left=0">&lt</button>
+  <button onmousedown="down=1" onmouseup="down=0">V</button>
+  <button onmousedown="right=1" onmouseup="right=0">&gt</button>
+  
+  wasd can be used to move
+  <button onmousedown="jump()">Jump</button>
+  space can be used to jump when gravity on
+  <br>
+  smooth movement now added
+  <br>
+  <button onclick="mode = !mode">gravity</button>
+  <br>
+  <button onclick="makeprojectile()">projectile (B button)</button>
+  <br>
+  <button onclick="trail = !trail">start lag production (auto projectile)</button>
+  
+  <div id="othersquare" class="square"></div>
+
+  <p>make sure to click off of button to prevent space from clicking button</p>
+  <!--
+  This script places a badge on your repl's full-browser view back to your repl's cover
+  page. Try various colors for the theme: dark, light, red, orange, yellow, lime, green,
+  teal, blue, blurple, magenta, pink!
+  -->
+  <script src="https://replit.com/public/js/replit-badge-v2.js" theme="dark" position="bottom-right"></script>
+
+</body>
+
+</html>
