@@ -157,14 +157,22 @@ function removsquare() {
   elmnt.remove();
 }
 
+function removprojecs() {
+  const elmnts = document.getElementsByClassName("projectile");
+  for (let i = 0; i < elmnts.length; i++) {
+    console.log(elmnts[i]);
+    elmnts[i].remove();
+  }
+}
+
 function makeprojectile() {
-  projectileID += 1;
+  projectileID ++;
   const projectile = document.createElement("div");
   projectile.className = "projectile";
   projectile.id = projectileID
   projectile.style.left = squareX + "px";
   projectile.style.top = squareY + "px";
-  document.body.appendChild(projectile);
+  document.getElementById("projectilecontainer").appendChild(projectile);
 }
 
 function projectilemove() {
