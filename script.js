@@ -157,14 +157,27 @@ function removsquare() {
   elmnt.remove();
 }
 
+function removprojecs() {
+  const elmnts = document.getElementById("projectilecontainer").childNodes;
+  const len = elmnts.length;
+  for (let i = 0; i < len; i++) {
+    console.log(elmnts[0]);
+    elmnts[0].remove();
+    // turns out HTMLCollections and NodeLists automatically update when you add or remove elements
+    // this requires me to set the length in a constant
+    // so that it doesn't change, which would cause the loop to break exactly halfway through, which it used to do
+    // I also had to remove element 0, not i, from the collection - otherwise it would delete elements in an alternating pattern, which it used to do
+  }
+}
+
 function makeprojectile() {
-  projectileID += 1;
+  projectileID ++;
   const projectile = document.createElement("div");
   projectile.className = "projectile";
   projectile.id = projectileID
   projectile.style.left = squareX + "px";
   projectile.style.top = squareY + "px";
-  document.body.appendChild(projectile);
+  document.getElementById("projectilecontainer").appendChild(projectile);
 }
 
 function projectilemove() {
