@@ -14,22 +14,22 @@ let trail = false;
 let projectileID = 0;
 
 function squareleft(v) {
-  squareX = squareX - v; //moves square left
+  squareX -= v; //moves square left
   square.style.left = squareX + "px";
 }
 
 function squareright(v) {
-  squareX = squareX + v; //moves square right
+  squareX += v; //moves square right
   square.style.left = squareX + "px";
 }
 
 function squareup(v) {
-  squareY = squareY - v; //moves square up
+  squareY -= v; //moves square up
   square.style.top = squareY + "px";
 }
 
 function squaredown(v) {
-  squareY = squareY + v; //moves square down
+  squareY += v; //moves square down
   square.style.top = squareY + "px";
 }
 
