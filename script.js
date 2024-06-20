@@ -1,50 +1,54 @@
-const maxjumps = 1;
 let right = 0;
 let left = 0;
 let up = 0;
 let down = 0;
-let squareX = 0;
-let squareY = 0;
-let squaresize = 0;
-let squareYvel = 0;
-let jumps = maxjumps;
+const Square = {
+  elem: document.getElementById("square"),
+  X: 0,
+  Y: 0,
+  Xvel: 0,
+  Yvel: 0,
+  maxJumps: 1,
+  jumps: this.maxjumps,
+  speed: 10,
+}
 let mode = false;
 let grounded = false;
 let trail = false;
 let projectileID = 0;
 
 function squareleft(v) {
-  squareX -= v; //moves square left
-  square.style.left = squareX + "px";
+  Square.X -= v; //moves square left
+  square.style.left = Square.X + "px";
 }
 
 function squareright(v) {
-  squareX += v; //moves square right
-  square.style.left = squareX + "px";
+  Square.X += v; //moves square right
+  square.style.left = Square.X + "px";
 }
 
 function squareup(v) {
-  squareY -= v; //moves square up
-  square.style.top = squareY + "px";
+  Square.Y -= v; //moves square up
+  square.style.top = Square.Y + "px";
 }
 
 function squaredown(v) {
-  squareY += v; //moves square down
-  square.style.top = squareY + "px";
+  Square.Y += v; //moves square down
+  square.style.top = Square.Y + "px";
 }
 
 const slider = document.getElementById("myRange");
 const output = document.getElementById("slidervalue");
 
 output.innerHTML = slider.value; // Display the default slider value
-squaresize = slider.value / 5;
+Square.speed = slider.value / 5;
 
 // Update the current slider value (each time you drag the slider handle)
 slider.oninput = function() {
   output.innerHTML = this.value;
   square.style.height = this.value + "px";
   square.style.width = this.value + "px";
-  squaresize = this.value / 5;
+  Square.speed = this.value / 5;
 }
 
 // Add event listener on keydown
@@ -104,51 +108,51 @@ function stuff() {
   }
 }
 function gravity() {
-  if (squareY > 440 - squaresize * 5) {grounded = true}
+  if (Square.Y > 440 - Square.speed * 5) {grounded = true}
   else {grounded = false}
   
   if (!grounded) {
-    squareYvel = squareYvel + 1;
+    Square.Yvel = Square.Yvel + 1;
   }
   else if (grounded) {
-    jumps = maxjumps;
-    if (squareYvel > 0) {squareYvel = 0}
+    Square.jumps = Square.maxJumps;
+    if (Square.Yvel > 0) {Square.Yvel = 0}
   }
   
 }
 
 function squaretomouse() { // doesn't work
-  squareX = window.event.clientX;
-  squareY = window.event.clientY;
-  square.style.left = squareX + "px";
-  square.style.top = squareY + "px";
+  Square.X = window.event.clientX;
+  Square.Y = window.event.clientY;
+  square.style.left = Square.X + "px";
+  square.style.top = Square.Y + "px";
 }
 
 function movement() { // there may be an easier way to do this
   if (right == 1) {
-    squareright(squaresize);
+    squareright(Square.speed);
   }
   if (left == 1) {
-    squareleft(squaresize);
+    squareleft(Square.speed);
   }
   if (!mode) {
     if (up == 1) {
-      squareup(squaresize);
+      squareup(Square.speed);
     }
     if (down == 1) {
-      squaredown(squaresize);
+      squaredown(Square.speed);
     }
   }
   if (mode) {
-    squaredown(squareYvel*squaresize/50);
+    squaredown(Square.Yvel*Square.speed/50);
   }
 }
 
 function jump() {
-  if (jumps > 0) {
+  if (Square.jumps > 0) {
     grounded = false;
-    jumps = jumps - 1;
-    squareYvel = -50;
+    Square.jumps = Square.jumps - 1;
+    Square.Yvel = -50;
   }
 }
 
@@ -175,8 +179,8 @@ function makeprojectile() {
   const projectile = document.createElement("div");
   projectile.className = "projectile";
   projectile.id = projectileID
-  projectile.style.left = squareX + "px";
-  projectile.style.top = squareY + "px";
+  projectile.style.left = Square.X + "px";
+  projectile.style.top = Square.Y + "px";
   document.getElementById("projectilecontainer").appendChild(projectile);
 }
 
