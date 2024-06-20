@@ -1,16 +1,16 @@
 const maxjumps = 1;
-var right = 0;
-var left = 0;
-var up = 0;
-var down = 0;
-var squareX = 0;
-var squareY = 0;
-var squaresize = 0;
-var squareYvel = 0;
-var jumps = maxjumps;
-var mode = false;
-var grounded = false;
-var trail = false;
+let right = 0;
+let left = 0;
+let up = 0;
+let down = 0;
+let squareX = 0;
+let squareY = 0;
+let squaresize = 0;
+let squareYvel = 0;
+let jumps = maxjumps;
+let mode = false;
+let grounded = false;
+let trail = false;
 let projectileID = 0;
 
 function squareleft(v) {
@@ -50,7 +50,7 @@ slider.oninput = function() {
 // Add event listener on keydown
 document.addEventListener('keydown', (event) => {
   const name = event.key;
-  // var code = event.code;
+  // const code = event.code;
   // Alert the key name and key code on keydown
   // alert(`Key pressed ${name} \r\n Key code value: ${code}`);
   
