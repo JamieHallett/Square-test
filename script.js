@@ -1,3 +1,4 @@
+const floorY = 440;
 let right = 0;
 let left = 0;
 let up = 0;
@@ -11,6 +12,8 @@ const Square = {
   maxJumps: 1,
   jumps: this.maxjumps,
   speed: 10,
+  sizetospd: 0.2,
+  size: 50,
 }
 let mode = false;
 let grounded = false;
@@ -41,14 +44,15 @@ const slider = document.getElementById("myRange");
 const output = document.getElementById("slidervalue");
 
 output.innerHTML = slider.value; // Display the default slider value
-Square.speed = slider.value / 5;
+Square.speed = slider.value * Square.sizetospd;
 
 // Update the current slider value (each time you drag the slider handle)
 slider.oninput = function() {
   output.innerHTML = this.value;
   square.style.height = this.value + "px";
   square.style.width = this.value + "px";
-  Square.speed = this.value / 5;
+  Square.size = this.value;
+  Square.speed = this.value * Square.sizetospd;
 }
 
 // Add event listener on keydown
@@ -108,11 +112,14 @@ function stuff() {
   }
 }
 function gravity() {
-  if (Square.Y > 440 - Square.speed * 5) {grounded = true}
+  if (Square.Y > floorY - Square.size) {
+    grounded = true;
+    if (Square.Y > floorY - Square.size + 1) {squareup(1)}
+  }
   else {grounded = false}
   
   if (!grounded) {
-    Square.Yvel = Square.Yvel + 1;
+    Square.Yvel += 1;
   }
   else if (grounded) {
     Square.jumps = Square.maxJumps;
@@ -186,7 +193,8 @@ function makeprojectile() {
 
 function projectilemove() {
   const projectiles = document.getElementsByClassName("projectile");
-  for (let i = 0; i < projectiles.length; i++) {
+  const len = projectiles.length;
+  for (let i = 0; i < len; i++) {
     const projectile = projectiles[i];
     //console.log(projectile.style.left.slice(0, -2));
     projectile.style.left = (Number(projectile.style.left.slice(0,-2)) + 10) + "px";
