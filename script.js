@@ -14,9 +14,9 @@ const Square = {
   speed: 10,
   sizetospd: 0.2,
   size: 50,
+  grounded: false
 }
 let mode = false;
-let grounded = false;
 let trail = false;
 let projectileID = 0;
 
@@ -111,19 +111,19 @@ function stuff() {
     makeprojectile();
   }
 }
-function gravity() {
-  if (Square.Y > floorY - Square.size) {
-    grounded = true;
-    if (Square.Y > floorY - Square.size + 1) {squareup(1)}
+function gravity(obj = Square) {
+  if (obj.Y > floorY - obj.size) {
+    obj.grounded = true;
+    if (obj.Y > floorY - obj.size + 1) {squareup(1)}
   }
-  else {grounded = false}
+  else {obj.grounded = false}
   
-  if (!grounded) {
-    Square.Yvel += 1;
+  if (!obj.grounded) {
+    obj.Yvel += 1;
   }
-  else if (grounded) {
-    Square.jumps = Square.maxJumps;
-    if (Square.Yvel > 0) {Square.Yvel = 0}
+  else if (obj.grounded) {
+    obj.jumps = obj.maxJumps;
+    if (obj.Yvel > 0) {obj.Yvel = 0}
   }
   
 }
@@ -157,7 +157,7 @@ function movement() { // there may be an easier way to do this
 
 function jump() {
   if (Square.jumps > 0) {
-    grounded = false;
+    Square.grounded = false;
     Square.jumps = Square.jumps - 1;
     Square.Yvel = -50;
   }
