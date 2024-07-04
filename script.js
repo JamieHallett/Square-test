@@ -22,22 +22,22 @@ let projectileID = 0;
 
 function squareleft(v) {
   Square.X -= v; //moves square left
-  square.style.left = Square.X + "px";
+  square.style.left = Square.X - Square.size/2 + "px";
 }
 
 function squareright(v) {
   Square.X += v; //moves square right
-  square.style.left = Square.X + "px";
+  square.style.left = Square.X - Square.size/2 + "px";
 }
 
 function squareup(v) {
   Square.Y -= v; //moves square up
-  square.style.top = Square.Y + "px";
+  square.style.top = Square.Y - Square.size/2 + "px";
 }
 
 function squaredown(v) {
   Square.Y += v; //moves square down
-  square.style.top = Square.Y + "px";
+  square.style.top = Square.Y - Square.size/2 + "px";
 }
 
 const slider = document.getElementById("myRange");
@@ -112,9 +112,9 @@ function stuff() {
   }
 }
 function gravity(obj = Square) {
-  if (obj.Y > floorY - obj.size) {
+  if (obj.Y > floorY - obj.size/2) {
     obj.grounded = true;
-    if (obj.Y > floorY - obj.size + 1) {squareup(1)}
+    if (obj.Y > floorY - obj.size/2 + 1) {squareup(1)}
   }
   else {obj.grounded = false}
   
