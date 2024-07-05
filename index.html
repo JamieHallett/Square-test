@@ -11,7 +11,17 @@
 </head>
 
 <body>
-
+  <div id="mySidenav" class="sidenav">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <a href="#square">go to square</a> <br>
+    <a href="#myRange">go to controls</a> <br>
+    
+    <input type="range" min="-90" max="90" value="0" class="slider" id="cannonAngle">
+    <span id="cannonAngValue">0</span>
+    
+    
+  </div>
+  
   <div class="slidecontainer">
 
     <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
@@ -49,11 +59,16 @@
   <button onclick="trail = !trail">start lag production (auto projectile)</button>
   <br>
   <button onclick="removprojecs()">remove all projectiles</button>
-  
+  <br>
   <div id="othersquare" class="square"></div>
+  <br>
   <div id="projectilecontainer"></div>
   
-  <p>make sure to click off of button to prevent space from clicking button</p>
+  <p>
+    make sure to click off of button to prevent space from clicking button
+    <br>
+    press c to open menu
+  </p>
   <!--
   This script places a badge on your repl's full-browser view back to your repl's cover
   page. Try various colors for the theme: dark, light, red, orange, yellow, lime, green,
