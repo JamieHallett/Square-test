@@ -106,54 +106,60 @@ document.addEventListener('keydown', (event) => {
   // Alert the key name and key code on keydown
   // alert(`Key pressed ${name} \r\n Key code value: ${code}`);
   
-  if (name.toLowerCase() == "a") {
-    left = 1;
-  }
-  if (name.toLowerCase() == "d") {
-    right = 1;
-  }
-  if (name.toLowerCase() == "w") {
-    up = 1;
-  }
-  if (name.toLowerCase() == "s") {
-    down = 1;
-  }
-  if (name.toLowerCase() == " ") {
-    jump();
+  switch (name.toLowerCase()) {
+    case "a":
+      left = 1;
+      break;
+    case "d":
+      right = 1;
+      break;
+    case "w":
+      up = 1;
+      break;
+    case "s":
+      down = 1;
+      break;
+
+    case " ":
+      jump()
+      break;
   }
     
 }, false);
 
 document.addEventListener('keyup', (event) => {
   const name = event.key;
-  
-  if (name.toLowerCase() == "a") {
-    left = 0;
-  }
-  if (name.toLowerCase() == "d") {
-    right = 0;
-  }
-  if (name.toLowerCase() == "w") {
-    up = 0; 
-  }
-  if (name.toLowerCase() == "s") {
-    down = 0;
-  }
-  if (name.toLowerCase() == "b") {
-    makeprojectile()
-  }
-  if (name.toLowerCase() == "c") {
-    if (!menu) {openNav()}
-    else {closeNav()}
-  }
-  if (name.toLowerCase() == "e") {
-    squaretomouse();
-  }
-  if (name.toLowerCase() == "r") {
-    removprojecs();
-  }
-  if (name.toLowerCase() == "v") {
-    makeprojectile(true);
+
+  switch (name.toLowerCase()) {
+    case "a":
+      left = 0;
+      break;
+    case "d":
+      right = 0;
+      break;
+    case "w":
+      up = 0;
+      break;
+    case "s":
+      down = 0;
+      break;
+      
+    case "b":
+      makeprojectile();
+      break;
+    case "c":
+      if (!menu) {openNav()}
+      else {closeNav()};
+      break;
+    case "e":
+      squaretomouse();
+      break;
+    case "r":
+      removprojecs();
+      break;
+    case "v":
+      makeprojectile(true);
+      break;
   }
   
 }, false);
