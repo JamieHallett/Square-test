@@ -33,22 +33,22 @@ let artillery = [];
 
 function squareleft(v) {
   Square.X -= v; //moves square left
-  square.style.left = Square.X - Square.size/2 + "px";
+  Square.elem.style.left = Square.X - Square.size/2 + "px";
 }
 
 function squareright(v) {
   Square.X += v; //moves square right
-  square.style.left = Square.X - Square.size/2 + "px";
+  Square.elem.style.left = Square.X - Square.size/2 + "px";
 }
 
 function squareup(v) {
   Square.Y -= v; //moves square up
-  square.style.top = Square.Y - Square.size/2 + "px";
+  Square.elem.style.top = Square.Y - Square.size/2 + "px";
 }
 
 function squaredown(v) {
   Square.Y += v; //moves square down
-  square.style.top = Square.Y - Square.size/2 + "px";
+  Square.elem.style.top = Square.Y - Square.size/2 + "px";
 }
 
 function objUp(obj, v) {
@@ -70,8 +70,8 @@ Square.speed = slider.value * Square.sizetospd;
 // Update the current slider value (each time you drag the slider handle)
 slider.oninput = function() {
   output.innerHTML = this.value;
-  square.style.height = this.value + "px";
-  square.style.width = this.value + "px";
+  Square.elem.style.height = this.value + "px";
+  Square.elem.style.width = this.value + "px";
   Square.size = this.value;
   Square.speed = this.value * Square.sizetospd;
 }
@@ -200,8 +200,8 @@ function gravity(obj = Square) {
 function squaretomouse() {
   Square.X = mouseX;
   Square.Y = mouseY;
-  square.style.left = Square.X + "px";
-  square.style.top = Square.Y + "px";
+  Square.elem.style.left = Square.X + "px";
+  Square.elem.style.top = Square.Y + "px";
 }
 
 function mousePosUpd(event) {
