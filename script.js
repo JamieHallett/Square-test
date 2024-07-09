@@ -190,11 +190,8 @@ function gravity(obj = Square) {
     if (obj.Yvel > 0) {obj.Yvel = 0}
   }
   
-  if (obj == Square) {squaredown(Square.Yvel*Square.speed/50)}
-  else {
-    obj.Y += obj.Yvel*Square.speed/50; //moves object down by scale of the page
-    obj.elem.style.top = obj.Y + "px";
-  }
+  objDown(obj, obj.Yvel*Square.speed/50); 
+  //moves object down by scale of the page
 }
 
 function squaretomouse() {
@@ -235,7 +232,7 @@ function movement() { // there may be an easier way to do this
 function jump() {
   if (Square.jumps > 0) {
     Square.grounded = false;
-    Square.jumps = Square.jumps - 1;
+    Square.jumps --;
     Square.Yvel = -50;
   }
 }
