@@ -4,8 +4,13 @@ let right = 0;
 let left = 0;
 let up = 0;
 let down = 0;
-let mouseX = 0;
-let mouseY = 0;
+const Mouse = {
+  X: 0,
+  Y: 0,
+  relX : () => {return Mouse.X - Square.X}, // relative to square
+  relY : () => {return Mouse.Y - Square.Y},
+};
+let trackMouse = false;
 const Square = {
   elem: document.getElementById("square"),
   X: 0,
@@ -22,14 +27,13 @@ const Square = {
     angle: 0,
     vel: 75,
   },
-}
+};
 let mode = false;
 let trail = false;
 let menu = false;
 let projectileID = 0;
 let artillery = [];
 
-//document.onmousemove = mousePosUpd;
 
 function squareleft(v) {
   Square.X -= v; //moves square left
@@ -60,6 +64,19 @@ function objDown(obj, v) {
   obj.elem.style.top = obj.Y - obj.size/2 + "px";
 }
 
+function toggletrackMouse() {
+  trackMouse = !trackMouse;
+  if (trackMouse) {
+    document.addEventListener("mousemove", trackmouse)
+  } else {
+    document.removeEventListener("mousemove", trackmouse)
+  }
+}
+
+function trackmouse(event) {
+  Mouse.X = event.pageX;
+  Mouse.Y = event.pageY;
+}
 
 const slider = document.getElementById("myRange");
 const output = document.getElementById("slidervalue");
@@ -274,8 +291,19 @@ function makeprojectile(gravity = false) {
   projectile.style.top = Square.Y + "px";
   document.getElementById("projectilecontainer").appendChild(projectile);
   if (gravity) {
-    const sin_ang = Math.sin(Square.Cannon.angle * degToRad);
-    const cos_ang = Math.cos(Square.Cannon.angle * degToRad);
+    let sin_ang = 0;
+    let cos_ang = 0;
+    if (trackMouse) {
+      const MouserelX = Mouse.relX();
+      const MouserelY = Mouse.relY();
+      const mousedist = Math.sqrt(MouserelX * MouserelX + MouserelY * MouserelY);
+
+      sin_ang = MouserelY / mousedist;
+      cos_ang = MouserelX / mousedist;
+    } else {
+      sin_ang = Math.sin(Square.Cannon.angle * degToRad);
+      cos_ang = Math.cos(Square.Cannon.angle * degToRad);
+    };
     artillery.push({
       id: projectileID,
       elem: projectile,
@@ -305,7 +333,13 @@ function projectilemove() {
     const projectile = artillery[i];
     projectile.X += projectile.Xvel*Square.speed/50;
     projectile.elem.style.left = projectile.X + "px";
-    gravity(projectile)
+    if (mode) {
+      gravity(projectile)
+    } else {
+      // gravity() incorporates Y velocity, so change in Y has to be calculated separately when not using gravity()
+      projectile.Y += projectile.Yvel*Square.speed/50;
+      projectile.elem.style.top = projectile.Y + "px";
+    }
   }
 }
 
