@@ -34,7 +34,6 @@
 
   <div id="floor" class="square"></div>
     
-  <script src="./script.js"></script>
   <br>
   <br>
   <br>
@@ -54,9 +53,9 @@
   <br>
   <button onclick="mode = !mode">gravity</button>
   <br>
-  <button onclick="makeprojectile()">projectile (B button)</button>
+  <button onclick="makeprojectile()">legacy projectile</button>
   <br>
-  <button onclick="trail = !trail">start lag production (auto projectile)</button>
+  <button onclick="trail = !trail">start lag production (auto (legacy) projectile)</button>
   <br>
   <button onclick="removprojecs()">remove all projectiles</button>
   <br>
@@ -72,7 +71,7 @@
     <br>
     press c to open menu
     <br>
-    press v to make artillery projectile
+    press v to make artillery / mouse-aimed projectile
   </p>
   <!--
   This script places a badge on your repl's full-browser view back to your repl's cover
@@ -80,6 +79,9 @@
   teal, blue, blurple, magenta, pink!
   -->
   <script src="https://replit.com/public/js/replit-badge-v2.js" theme="dark" position="bottom-right"></script>
+
+  <script src="./script.js"></script>
+  <!--script is here to make sure elements exist before using getElementById()-->
 
 </body>
 

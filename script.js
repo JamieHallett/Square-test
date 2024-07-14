@@ -28,9 +28,24 @@ const Square = {
     vel: 75,
   },
 };
+const OtherSquare = {
+  elem: document.getElementById("othersquare"),
+  X: 225,
+  Y: 225,
+  Xvel: 0,
+  Yvel: 0,
+  size: 50,
+  hit: function() {
+    OtherSquare.elem.style.backgroundColor = "#800000"; // dark red
+    setTimeout(function() {
+      OtherSquare.elem.style.backgroundColor = "#050505"; // reset to standard square colour in 50ms
+    }, 50)
+  }
+};
 let mode = false;
 let trail = false;
 let menu = false;
+let firing = false;
 let projectileID = 0;
 let artillery = [];
 
@@ -138,7 +153,10 @@ document.addEventListener('keydown', (event) => {
       break;
 
     case " ":
-      jump()
+      jump();
+      break;
+    case "b":
+      firing = true;
       break;
   }
     
@@ -162,8 +180,9 @@ document.addEventListener('keyup', (event) => {
       break;
       
     case "b":
-      makeprojectile();
+      firing = false;
       break;
+    
     case "c":
       if (!menu) {openNav()}
       else {closeNav()};
@@ -184,11 +203,15 @@ document.addEventListener('keyup', (event) => {
 function stuff() {
   movement();
   projectilemove();
+  checkProjecColl();
   if (mode) {
     gravity();
   }
   if (trail) {
     makeprojectile();
+  }
+  if (firing) {
+    makeprojectile(true);
   }
 }
 
@@ -211,17 +234,11 @@ function gravity(obj = Square) {
   //moves object down by scale of the page
 }
 
-function squaretomouse() {
-  Square.X = mouseX;
-  Square.Y = mouseY;
-  Square.elem.style.left = Square.X + "px";
-  Square.elem.style.top = Square.Y + "px";
-}
-
-function mousePosUpd(event) {
-  mouseX = event.pageX;
-  mouseY = event.pageY;
-  console.log(mouseX, mouseY)
+function teleport(obj = OtherSquare, destObj = Mouse) {
+  obj.X = destObj.X;
+  obj.Y = destObj.Y;
+  obj.elem.style.left = obj.X - obj.size/2+ "px";
+  obj.elem.style.top = obj.Y - obj.size/2 + "px";
 }
 
 function movement() { // there may be an easier way to do this
@@ -254,6 +271,39 @@ function jump() {
   }
 }
 
+function collision(obj1, obj2, obj1IsPoint=false) {
+  const diffX = obj1.X - obj2.X;
+  const diffY = obj1.Y - obj2.Y;
+  const dist = Math.sqrt(diffX*diffX + diffY*diffY);
+  if (dist > obj1.size + obj2.size) {return false}; // return if objects are way too far for collision
+  if (obj1IsPoint) {
+    if (obj1.X > obj2.X - obj2.size/2 
+        && obj1.X < obj2.X + obj2.size/2 
+        && obj1.Y > obj2.Y - obj2.size/2 
+        && obj1.Y < obj2.Y + obj2.size/2 
+        ) // true if obj1's centre is within bounds of obj2
+    {return true}
+  } else {
+    if (obj1.X + obj1.size/2 > obj2.X - obj2.size/2 
+        && obj1.X - obj1.size/2 < obj2.X + obj2.size/2 
+        && obj1.Y + obj1.size/2 > obj2.Y - obj2.size/2 
+        && obj1.Y - obj1.size/2 < obj2.Y + obj2.size/2) // true if obj1's bounds are within bounds of obj2
+    {return true};
+  };
+  return false;
+}
+
+function checkProjecColl() {
+  for (let i = 0; i < artillery.length; i++) {
+    if (collision(artillery[i], OtherSquare, true)) {
+      const delProjec = artillery.splice(i, 1);
+      i--;
+      OtherSquare.hit();
+      delProjec[0].elem.remove();
+    }
+  }
+}
+
 function removsquare() {
   const elmnt = document.getElementById("othersquare");
   elmnt.remove();
@@ -278,10 +328,11 @@ function removprojecs() {
   }
 }
 
-function makeprojectile(gravity = false) {
+function makeprojectile(aiming = false) {
+  // the aiming parameter is for artillery / mouse-aimed projectiles
   projectileID ++;
   const projectile = document.createElement("div");
-  if (gravity) {
+  if (aiming) {
     projectile.className = "artillery";
   } else {
     projectile.className = "projectile";
@@ -290,7 +341,7 @@ function makeprojectile(gravity = false) {
   projectile.style.left = Square.X + "px";
   projectile.style.top = Square.Y + "px";
   document.getElementById("projectilecontainer").appendChild(projectile);
-  if (gravity) {
+  if (aiming) {
     let sin_ang = 0;
     let cos_ang = 0;
     if (trackMouse) {
@@ -304,6 +355,7 @@ function makeprojectile(gravity = false) {
       sin_ang = Math.sin(Square.Cannon.angle * degToRad);
       cos_ang = Math.cos(Square.Cannon.angle * degToRad);
     };
+    
     artillery.push({
       id: projectileID,
       elem: projectile,

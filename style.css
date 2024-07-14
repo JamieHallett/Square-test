@@ -7,11 +7,16 @@ html {
   width: 50%;
 }
 
-#square {
+.square {
   height: 50px;
   width: 50px;
   position: absolute;
   background-color: #050505;
+}
+
+#othersquare {
+  top: 200px;
+  left: 200px;
 }
 
 #floor {
