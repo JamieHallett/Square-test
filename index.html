@@ -18,7 +18,9 @@
     
     <input type="range" min="-90" max="90" value="0" class="slider" id="cannonAngle">
     <span id="cannonAngValue">0</span>
-    
+
+    <input type="text" id="enterweapon" value="c">
+    <button onclick="applyWeapon()">apply weapon</button>
     
   </div>
   
@@ -41,9 +43,9 @@
   <button onmousedown="up=1" onmouseup="up=0" ontouchstart="up=1" ontouchend="up=0">^</button>
   <noscript>you have no javascript</noscript>
   <br>
-  <button onmousedown="left=1" onmouseup="left=0" ontouchstart="left=1" ontouchend="left=0">&lt</button>
+  <button onmousedown="left=1" onmouseup="left=0" ontouchstart="left=1" ontouchend="left=0">&lt;</button>
   <button onmousedown="down=1" onmouseup="down=0" ontouchstart="down=1" ontouchend="down=0">V</button>
-  <button onmousedown="right=1" onmouseup="right=0" ontouchstart="right=1" ontouchend="right=0">&gt</button>
+  <button onmousedown="right=1" onmouseup="right=0" ontouchstart="right=1" ontouchend="right=0">&gt;</button>
   
   wasd can be used to move
   <button onclick="jump()">Jump</button>
@@ -51,7 +53,7 @@
   <br>
   smooth movement now added
   <br>
-  <button onclick="mode = !mode">gravity</button>
+  <button onclick="toggleGravity()">gravity</button>
   <br>
   <button onclick="makeprojectile()">legacy projectile</button>
   <br>
@@ -59,7 +61,7 @@
   <br>
   <button onclick="removprojecs()">remove all projectiles</button>
   <br>
-  <button onclick="toggletrackMouse()">toggle track mouse (could cause lag) (required for mouse-aimed projectiles)</button>
+  <button onclick="toggletrackMouse()">toggle track mouse (on by default) (required for mouse-aimed projectiles)</button>
 
   <br>
   <div id="othersquare" class="square"></div>

@@ -10,7 +10,7 @@ const Mouse = {
   relX : () => {return Mouse.X - Square.X}, // relative to square
   relY : () => {return Mouse.Y - Square.Y},
 };
-let trackMouse = false;
+let trackMouse = true;
 const Square = {
   elem: document.getElementById("square"),
   X: 0,
@@ -35,12 +35,13 @@ const OtherSquare = {
   Xvel: 0,
   Yvel: 0,
   size: 50,
-  hit: function() {
+  hit: function(dmg) {
+    console.log(dmg)
     OtherSquare.elem.style.backgroundColor = "#800000"; // dark red
     setTimeout(function() {
       OtherSquare.elem.style.backgroundColor = "#050505"; // reset to standard square colour in 50ms
     }, 50)
-  }
+  },
 };
 let mode = false;
 let trail = false;
@@ -48,6 +49,36 @@ let menu = false;
 let firing = false;
 let projectileID = 0;
 let artillery = [];
+const weapons = {
+  code: "c",
+  current: function() {return weapons[weapons.code]},
+  a: {
+    rate: 2,
+    interval: 500,
+    dmg: 115,
+    dmgrange: {start: 300, end: 600, endval : 100},
+    vel: 237.5,
+    auto: false,
+  },
+  b: {
+    rate: 9,
+    interval: 110,
+    dmg: 45,
+    dmgrange: {start: 200, end: 400, endval : 35},
+    vel: 237.5,
+    auto: true,
+  },
+  c: {
+    rate: 13,
+    interval: 75,
+    dmg: 35,
+    dmgrange: {start: 100, end: 300, endval : 30},
+    vel: 237.5,
+    auto: true,
+  },
+}
+let firingIntervalID = 0;
+let canFire = true;
 
 
 function squareleft(v) {
@@ -91,6 +122,7 @@ function toggletrackMouse() {
 function trackmouse(event) {
   Mouse.X = event.pageX;
   Mouse.Y = event.pageY;
+  //console.log(Mouse.X, Mouse.Y);
 }
 
 const slider = document.getElementById("myRange");
@@ -156,7 +188,7 @@ document.addEventListener('keydown', (event) => {
       jump();
       break;
     case "b":
-      firing = true;
+      setFiring(true)
       break;
   }
     
@@ -180,7 +212,7 @@ document.addEventListener('keyup', (event) => {
       break;
       
     case "b":
-      firing = false;
+      setFiring(false)
       break;
     
     case "c":
@@ -188,7 +220,7 @@ document.addEventListener('keyup', (event) => {
       else {closeNav()};
       break;
     case "e":
-      squaretomouse();
+      teleport(); // by default teleports othersquare to mouse
       break;
     case "r":
       removprojecs();
@@ -200,6 +232,8 @@ document.addEventListener('keyup', (event) => {
   
 }, false);
 
+document.addEventListener("mousemove", trackmouse)
+
 function stuff() {
   movement();
   projectilemove();
@@ -210,8 +244,17 @@ function stuff() {
   if (trail) {
     makeprojectile();
   }
-  if (firing) {
+  /*if (firing) {
     makeprojectile(true);
+  }*/
+}
+
+function toggleGravity() {
+  mode = !mode;
+  if (mode) {
+    document.getElementById("floor").style.visibility = "visible";
+  } else {
+    document.getElementById("floor").style.visibility = "hidden";
   }
 }
 
@@ -293,13 +336,68 @@ function collision(obj1, obj2, obj1IsPoint=false) {
   return false;
 }
 
+function collisionPredict(obj1, obj2) { // here obj1 is always a point, and obj2 is assumed to be stationary
+  const diffX = obj1.X - obj2.X;
+  const diffY = obj1.Y - obj2.Y;
+  const dist = Math.sqrt(diffX*diffX + diffY*diffY);
+
+  const spd = Math.sqrt(obj1.Xvel*obj1.Xvel + obj1.Yvel*obj1.Yvel);
+  
+  if (dist > spd/4) {return false}; // if obj1 cannot reach obj2 in time, return false
+  
+  //console.log(dist-spd);
+  
+  if (collision(obj1, obj2, true)) {return true}; // if objects are already colliding, return true
+  
+  const topleftcorner = {X: diffX - obj2.size/2, Y: diffY - obj2.size/2};
+  const toprightcorner = {X: diffX + obj2.size/2, Y: diffY - obj2.size/2};
+  const bottomleftcorner = {X: diffX - obj2.size/2, Y: diffY + obj2.size/2};
+  const botttomrightcorner = {X: diffX + obj2.size/2, Y: diffY + obj2.size/2};
+
+  const corners = [topleftcorner, toprightcorner, bottomleftcorner, botttomrightcorner];
+  const cornerAngs = [];
+  
+  //console.log(corners);
+
+  const velAng = Math.atan2(obj1.Yvel, obj1.Xvel);
+
+  for (let i = 0; i < 4; i++) {
+    const cornerAng = Math.atan2(corners[i].Y , corners[i].X)
+    cornerAngs.push(cornerAng)
+  };
+
+  const cornerAngsSorted = cornerAngs.sort(function(a, b){return a - b});
+
+  const newVelAng = (velAng + 2*Math.PI) % Math.PI
+  
+  console.log(cornerAngsSorted);
+  console.log((cornerAngsSorted[0] + 2*Math.PI) % Math.PI - newVelAng);
+  console.log((cornerAngsSorted[3] + 2*Math.PI) % Math.PI - newVelAng);
+  console.log(newVelAng);
+
+  
+  if ((cornerAngsSorted[0] + 2*Math.PI) % Math.PI - newVelAng
+      <= 0 && 0 <= 
+      (cornerAngsSorted[3] + 2*Math.PI) % Math.PI - newVelAng) 
+  {return true}; // if obj1 is going towards obj2, return true
+  
+  console.log("congratulations you made it to the end");
+  
+  return false; // if the above did not return true
+} 
+
 function checkProjecColl() {
   for (let i = 0; i < artillery.length; i++) {
-    if (collision(artillery[i], OtherSquare, true)) {
-      const delProjec = artillery.splice(i, 1);
-      i--;
-      OtherSquare.hit();
-      delProjec[0].elem.remove();
+    console.log(collisionPredict(artillery[i], OtherSquare))
+    if (collisionPredict(artillery[i], OtherSquare)) {
+      //setTimeout( () => 
+        {
+        const delProjec = artillery.splice(i, 1);
+        i--;
+        OtherSquare.hit(delProjec[0].dmg);
+        delProjec[0].elem.remove();
+        }
+      //, 10)
     }
   }
 }
@@ -328,6 +426,22 @@ function removprojecs() {
   }
 }
 
+function applyWeapon() {
+  const inputElem = document.getElementById("enterweapon");
+  weapons.code = inputElem.value;
+}
+  
+function setFiring(fireon) {
+  if (!firing && fireon && canFire) {
+    makeprojectile(true)
+    firingIntervalID = setInterval(function () {makeprojectile(true)}, weapons.current().interval)
+    firing = true
+  } else if (!fireon) {
+    clearInterval(firingIntervalID)
+    firing = false
+  }
+}
+
 function makeprojectile(aiming = false) {
   // the aiming parameter is for artillery / mouse-aimed projectiles
   projectileID ++;
@@ -344,6 +458,9 @@ function makeprojectile(aiming = false) {
   if (aiming) {
     let sin_ang = 0;
     let cos_ang = 0;
+    let velY = 0;
+    let velX = 0;
+    const weapon = weapons.current();
     if (trackMouse) {
       const MouserelX = Mouse.relX();
       const MouserelY = Mouse.relY();
@@ -351,20 +468,24 @@ function makeprojectile(aiming = false) {
 
       sin_ang = MouserelY / mousedist;
       cos_ang = MouserelX / mousedist;
+      velY = weapon.vel * sin_ang;
+      velX = weapon.vel * cos_ang;
     } else {
       sin_ang = Math.sin(Square.Cannon.angle * degToRad);
       cos_ang = Math.cos(Square.Cannon.angle * degToRad);
+      velY = Square.Cannon.vel * sin_ang;
+      velX = Square.Cannon.vel * cos_ang;
     };
-    
     artillery.push({
       id: projectileID,
       elem: projectile,
       X: Square.X,
       Y: Square.Y,
-      Xvel: cos_ang * Square.Cannon.vel,
-      Yvel: sin_ang * Square.Cannon.vel,
+      Xvel: velX,
+      Yvel: velY,
       grounded: false,
       size: 5,
+      dmg: weapon.dmg,
     });
   }
 }

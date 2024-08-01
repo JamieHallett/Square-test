@@ -26,6 +26,7 @@ html {
   background-color: #3b3b3b;
   left: 0px;
   top: 440px;
+  visibility: hidden;
 }
 
 .projectile {
