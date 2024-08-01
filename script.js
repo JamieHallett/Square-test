@@ -355,31 +355,32 @@ function collisionPredict(obj1, obj2) { // here obj1 is always a point, and obj2
   const botttomrightcorner = {X: diffX + obj2.size/2, Y: diffY + obj2.size/2};
 
   const corners = [topleftcorner, toprightcorner, bottomleftcorner, botttomrightcorner];
-  const cornerAngs = [];
+  
+  //const cornerAngs = [];
   
   //console.log(corners);
 
   const velAng = Math.atan2(obj1.Yvel, obj1.Xvel);
 
+  /*
   for (let i = 0; i < 4; i++) {
     const cornerAng = Math.atan2(corners[i].Y , corners[i].X)
     cornerAngs.push(cornerAng)
   };
+  */
 
-  const cornerAngsSorted = cornerAngs.sort(function(a, b){return a - b});
+  //const cornerAngsSorted = cornerAngs.sort(function(a, b){return a - b});
 
-  const newVelAng = (velAng + 2*Math.PI) % Math.PI
+  const notaDotProduct = [];
+
+  for (let i = 0; i < 4; i++) {
+    notaDotProduct.push(Math.sign(corners[i].X * obj1.Yvel - corners[i].Y * obj1.Xvel))
+  }; // this calculates if velocity vector is clockwise or counterclockwise from the corner vector
+
+  console.log(notaDotProduct);
   
-  console.log(cornerAngsSorted);
-  console.log((cornerAngsSorted[0] + 2*Math.PI) % Math.PI - newVelAng);
-  console.log((cornerAngsSorted[3] + 2*Math.PI) % Math.PI - newVelAng);
-  console.log(newVelAng);
-
-  
-  if ((cornerAngsSorted[0] + 2*Math.PI) % Math.PI - newVelAng
-      <= 0 && 0 <= 
-      (cornerAngsSorted[3] + 2*Math.PI) % Math.PI - newVelAng) 
-  {return true}; // if obj1 is going towards obj2, return true
+  if (new Set(notaDotProduct).size > 1)
+  {return true}; // if corner angles are only clockwise or only counterclockwise of velocity vector, return true
   
   console.log("congratulations you made it to the end");
   
