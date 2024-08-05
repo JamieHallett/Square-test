@@ -1,14 +1,17 @@
-const degToRad = Math.PI/180
+const degToRad = Math.PI/180;
+const scale = 0.25; // 1m/s = 0.25px/10ms 1m = 25px
+const loopfreq = 100;
 const floorY = 440;
 let right = 0;
 let left = 0;
 let up = 0;
 let down = 0;
+const Main = document.getElementById("main");
 const Mouse = {
   X: 0,
   Y: 0,
-  relX : () => {return Mouse.X - Square.X}, // relative to square
-  relY : () => {return Mouse.Y - Square.Y},
+  get relX() {return Mouse.X - Square.X}, // relative to square
+  get relY() {return Mouse.Y - Square.Y},
 };
 let trackMouse = true;
 const Square = {
@@ -19,22 +22,22 @@ const Square = {
   Yvel: 0,
   maxJumps: 1,
   jumps: this.maxjumps,
-  speed: 10,
-  sizetospd: 0.2,
-  size: 50,
+  speed: 4.3, // in m/s
+  sizetospd: 0.172,
+  size: 25, // in pixels
   grounded: false,
-  Cannon: {
+  Cannon: { // no longer used
     angle: 0,
     vel: 75,
   },
 };
 const OtherSquare = {
   elem: document.getElementById("othersquare"),
-  X: 225,
-  Y: 225,
+  X: 212.5,
+  Y: 212.5,
   Xvel: 0,
   Yvel: 0,
-  size: 50,
+  size: 25,
   hit: function(dmg) {
     console.log(dmg)
     OtherSquare.elem.style.backgroundColor = "#800000"; // dark red
@@ -46,18 +49,20 @@ const OtherSquare = {
 let mode = false;
 let trail = false;
 let menu = false;
+let inventory = false;
 let firing = false;
+let typing = false;
 let projectileID = 0;
 let artillery = [];
 const weapons = {
-  code: "c",
-  current: function() {return weapons[weapons.code]},
+  code: "c", // this is the default weapon
+  get current() {return weapons[weapons.code]},
   a: {
     rate: 2,
     interval: 500,
     dmg: 115,
     dmgrange: {start: 300, end: 600, endval : 100},
-    vel: 237.5,
+    vel: 950,
     auto: false,
   },
   b: {
@@ -65,7 +70,7 @@ const weapons = {
     interval: 110,
     dmg: 45,
     dmgrange: {start: 200, end: 400, endval : 35},
-    vel: 237.5,
+    vel: 950,
     auto: true,
   },
   c: {
@@ -73,7 +78,7 @@ const weapons = {
     interval: 75,
     dmg: 35,
     dmgrange: {start: 100, end: 300, endval : 30},
-    vel: 237.5,
+    vel: 950,
     auto: true,
   },
 }
@@ -152,16 +157,26 @@ slider2.oninput = function() {
 }
 
 /* Set the width of the side navigation to 250px */
- function openNav() {
-   menu = true
-   document.getElementById("mySidenav").style.width = "250px";
- }
+function openNav() {
+  menu = true
+  document.getElementById("mySidenav").style.width = "250px";
+}
 
  /* Set the width of the side navigation to 0 */
- function closeNav() {
-   menu = false
-   document.getElementById("mySidenav").style.width = "0";
- }
+function closeNav() {
+  menu = false
+  document.getElementById("mySidenav").style.width = "0";
+}
+
+function openInventory() {
+  inventory = true;
+  document.getElementById("inventory").style.visibility = "visible";
+}
+
+function closeInventory() {
+  inventory = false;
+  document.getElementById("inventory").style.visibility = "hidden";
+}
 
 // Add event listener on keydown
 document.addEventListener('keydown', (event) => {
@@ -170,71 +185,79 @@ document.addEventListener('keydown', (event) => {
   // Alert the key name and key code on keydown
   // alert(`Key pressed ${name} \r\n Key code value: ${code}`);
   
-  switch (name.toLowerCase()) {
-    case "a":
-      left = 1;
-      break;
-    case "d":
-      right = 1;
-      break;
-    case "w":
-      up = 1;
-      break;
-    case "s":
-      down = 1;
-      break;
+  if (!typing) {
+    switch (name.toLowerCase()) {
+      case "a":
+        left = 1;
+        break;
+      case "d":
+        right = 1;
+        break;
+      case "w":
+        up = 1;
+        break;
+      case "s":
+        down = 1;
+        break;
 
-    case " ":
-      jump();
-      break;
-    case "b":
-      setFiring(true)
-      break;
+      case " ":
+        jump();
+        break;
+      case "b":
+        setFiring(true)
+        break;
+    }
   }
     
 }, false);
 
 document.addEventListener('keyup', (event) => {
   const name = event.key;
+  
+  if (!typing) {
+    switch (name.toLowerCase()) {
+      case "a":
+        left = 0;
+        break;
+      case "d":
+        right = 0;
+        break;
+      case "w":
+        up = 0;
+        break;
+      case "s":
+        down = 0;
+        break;
 
-  switch (name.toLowerCase()) {
-    case "a":
-      left = 0;
-      break;
-    case "d":
-      right = 0;
-      break;
-    case "w":
-      up = 0;
-      break;
-    case "s":
-      down = 0;
-      break;
-      
-    case "b":
-      setFiring(false)
-      break;
-    
-    case "c":
-      if (!menu) {openNav()}
-      else {closeNav()};
-      break;
-    case "e":
-      teleport(); // by default teleports othersquare to mouse
-      break;
-    case "r":
-      removprojecs();
-      break;
-    case "v":
-      makeprojectile(true);
-      break;
+      case "b":
+        setFiring(false);
+        break;
+
+      case "c":
+        if (!menu) {openNav()}
+        else {closeNav()};
+        break;
+      case "i":
+        if (!inventory) {openInventory()}
+        else {closeInventory()}
+        break;
+      case "e":
+        teleport(); // by default teleports othersquare to mouse
+        break;
+      case "r":
+        removprojecs();
+        break;
+      case "v":
+        makeprojectile(true);
+        break;
+    }
   }
   
 }, false);
 
 document.addEventListener("mousemove", trackmouse)
 
-function stuff() {
+function loop() {
   movement();
   projectilemove();
   checkProjecColl();
@@ -285,18 +308,24 @@ function teleport(obj = OtherSquare, destObj = Mouse) {
 }
 
 function movement() { // there may be an easier way to do this
+  let speed = Square.speed * scale;
+  
+  if (Math.abs((right-left) && (up-down)) == 1) {
+    speed *= Math.SQRT1_2 // this is run if moving both vertically and horizontally
+  }
+  
   if (right == 1) {
-    squareright(Square.speed);
+    squareright(speed);
   }
   if (left == 1) {
-    squareleft(Square.speed);
+    squareleft(speed);
   }
   if (!mode) {
     if (up == 1) {
-      squareup(Square.speed);
+      squareup(speed);
     }
     if (down == 1) {
-      squaredown(Square.speed);
+      squaredown(speed);
     }
   }
   /*
@@ -360,7 +389,7 @@ function collisionPredict(obj1, obj2) { // here obj1 is always a point, and obj2
   
   //console.log(corners);
 
-  const velAng = Math.atan2(obj1.Yvel, obj1.Xvel);
+  //const velAng = Math.atan2(obj1.Yvel, obj1.Xvel);
 
   /*
   for (let i = 0; i < 4; i++) {
@@ -377,19 +406,16 @@ function collisionPredict(obj1, obj2) { // here obj1 is always a point, and obj2
     notaDotProduct.push(Math.sign(corners[i].X * obj1.Yvel - corners[i].Y * obj1.Xvel))
   }; // this calculates if velocity vector is clockwise or counterclockwise from the corner vector
 
-  console.log(notaDotProduct);
+  //console.log(notaDotProduct);
   
   if (new Set(notaDotProduct).size > 1)
   {return true}; // if corner angles are only clockwise or only counterclockwise of velocity vector, return true
-  
-  console.log("congratulations you made it to the end");
   
   return false; // if the above did not return true
 } 
 
 function checkProjecColl() {
   for (let i = 0; i < artillery.length; i++) {
-    console.log(collisionPredict(artillery[i], OtherSquare))
     if (collisionPredict(artillery[i], OtherSquare)) {
       //setTimeout( () => 
         {
@@ -434,12 +460,20 @@ function applyWeapon() {
   
 function setFiring(fireon) {
   if (!firing && fireon && canFire) {
-    makeprojectile(true)
-    firingIntervalID = setInterval(function () {makeprojectile(true)}, weapons.current().interval)
-    firing = true
+    currentWeapon = weapons.current;
+    makeprojectile(true);
+    firingIntervalID = setInterval(
+      function() {
+        makeprojectile(true);
+        canFire = false;
+        setTimeout(() => {canFire = true}, currentWeapon.interval);
+      }, currentWeapon.interval)
+    firing = true;
+    canFire = false;
+    setTimeout(() => {canFire = true}, currentWeapon.interval);
   } else if (!fireon) {
-    clearInterval(firingIntervalID)
-    firing = false
+    clearInterval(firingIntervalID);
+    firing = false;
   }
 }
 
@@ -453,24 +487,24 @@ function makeprojectile(aiming = false) {
     projectile.className = "projectile";
   }
   projectile.id = projectileID
-  projectile.style.left = Square.X + "px";
-  projectile.style.top = Square.Y + "px";
+  projectile.style.left = Square.X - 2.5 + "px"; // 2.5 is projectile radius
+  projectile.style.top = Square.Y - 2.5 + "px";
   document.getElementById("projectilecontainer").appendChild(projectile);
   if (aiming) {
     let sin_ang = 0;
     let cos_ang = 0;
     let velY = 0;
     let velX = 0;
-    const weapon = weapons.current();
+    const weapon = weapons.current;
     if (trackMouse) {
-      const MouserelX = Mouse.relX();
-      const MouserelY = Mouse.relY();
+      const MouserelX = Mouse.relX;
+      const MouserelY = Mouse.relY;
       const mousedist = Math.sqrt(MouserelX * MouserelX + MouserelY * MouserelY);
 
       sin_ang = MouserelY / mousedist;
       cos_ang = MouserelX / mousedist;
-      velY = weapon.vel * sin_ang;
-      velX = weapon.vel * cos_ang;
+      velY = weapon.vel * scale * sin_ang;
+      velX = weapon.vel * scale * cos_ang;
     } else {
       sin_ang = Math.sin(Square.Cannon.angle * degToRad);
       cos_ang = Math.cos(Square.Cannon.angle * degToRad);
@@ -498,23 +532,23 @@ function projectilemove() {
   for (let i = 0; i < len; i++) {
     const projectile = projectiles[i];
     //console.log(projectile.style.left.slice(0, -2));
-    projectile.style.left = (Number(projectile.style.left.slice(0,-2)) + Square.speed) + "px";
+    projectile.style.left = (Number(projectile.style.left.slice(0,-2)) + Square.speed) + "px"; // slice removes "px" to make it a number
   }
 
   // for artillery:
   const len2 = artillery.length;
   for (let i = 0; i < len2; i++) {
     const projectile = artillery[i];
-    projectile.X += projectile.Xvel*Square.speed/50;
-    projectile.elem.style.left = projectile.X + "px";
+    projectile.X += projectile.Xvel * scale;
+    projectile.elem.style.left = projectile.X - projectile.size/2 + "px";
     if (mode) {
       gravity(projectile)
     } else {
       // gravity() incorporates Y velocity, so change in Y has to be calculated separately when not using gravity()
-      projectile.Y += projectile.Yvel*Square.speed/50;
-      projectile.elem.style.top = projectile.Y + "px";
+      projectile.Y += projectile.Yvel * scale;
+      projectile.elem.style.top = projectile.Y - projectile.size/2 + "px";
     }
   }
 }
 
-setInterval(stuff, 10);
+setInterval(loop, 1/loopfreq);

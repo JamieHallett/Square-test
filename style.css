@@ -3,13 +3,29 @@ html {
   width: 100%;
 }
 
+#main {
+  height: 100%;
+  width: 100%;
+}
+
+#inventory {
+  top: 10%;
+  left: 10%;
+  position: absolute;
+  height: 80%;
+  width: 80%;
+  background-color: #e5e5e5;
+  visibility: hidden;
+  z-index: 2;
+}
+
 .slider {
   width: 50%;
 }
 
 .square {
-  height: 50px;
-  width: 50px;
+  height: 25px;
+  width: 25px;
   position: absolute;
   background-color: #050505;
 }
