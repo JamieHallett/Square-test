@@ -54,6 +54,12 @@ let firing = false;
 let typing = false;
 let projectileID = 0;
 let artillery = [];
+const items = {
+  ammo_a: 100,
+  ammo_b: 200,
+  ammo_c: 300,
+  ammo_d: 20,
+}
 const weapons = {
   code: "c", // this is the default weapon
   get current() {return weapons[weapons.code]},
@@ -61,25 +67,61 @@ const weapons = {
     rate: 2,
     interval: 500,
     dmg: 115,
-    dmgrange: {start: 300, end: 600, endval : 100},
+    dmgrange: {start: 100, end: 225, endval : 100},
     vel: 950,
     auto: false,
+    inacc: 0,
+    projecMult: 1,
   },
   b: {
     rate: 9,
     interval: 110,
     dmg: 45,
-    dmgrange: {start: 200, end: 400, endval : 35},
+    dmgrange: {start: 75, end: 150, endval : 35},
     vel: 950,
     auto: true,
+    inacc: 0,
+    projecMult: 1,
   },
   c: {
     rate: 13,
     interval: 75,
     dmg: 35,
-    dmgrange: {start: 100, end: 300, endval : 30},
+    dmgrange: {start: 50, end: 150, endval : 30},
     vel: 950,
     auto: true,
+    inacc: 0,
+    projecMult: 1,
+  },
+  d: {
+    rate: 10,
+    interval: 100,
+    dmg: 30,
+    dmgrange: {start: 25, end: 75, endval : 20},
+    vel: 400,
+    auto: false,
+    inacc: 0.05, // measured in radians (but it breaks down at higher values)
+    projecMult: 8,
+  },
+  testwave: {
+    rate: 2,
+    interval: 500,
+    dmg: 1,
+    dmgrange: {start: 25, end: 75, endval : 20},
+    vel: 40,
+    auto: true,
+    inacc: 0.2,
+    projecMult: 50,
+  },
+  testinacc: {
+    rate: 50,
+    interval: 20,
+    dmg: 35,
+    dmgrange: {start: 50, end: 150, endval : 30},
+    vel: 950,
+    auto: true,
+    inacc: 0.02, // inaccuracy with only 1 projectile
+    projecMult: 1,
   },
 }
 let firingIntervalID = 0;
@@ -479,28 +521,30 @@ function setFiring(fireon) {
 
 function makeprojectile(aiming = false) {
   // the aiming parameter is for artillery / mouse-aimed projectiles
-  projectileID ++;
-  const projectile = document.createElement("div");
-  if (aiming) {
-    projectile.className = "artillery";
-  } else {
-    projectile.className = "projectile";
+  let singleProjectile;
+  const weapon = weapons.current;
+  if (!aiming || weapon.inacc == 0) { // if weapon is inaccurate, projectile element will be created in the for loop later
+    projectileID ++;
+    singleProjectile = document.createElement("div");
+    if (aiming) {
+      singleProjectile.className = "artillery";
+    } else {
+      singleProjectile.className = "projectile";
+    }
+    singleProjectile.id = projectileID
+    singleProjectile.style.left = Square.X - 2.5 + "px"; // 2.5 is projectile radius
+    singleProjectile.style.top = Square.Y - 2.5 + "px";
+    document.getElementById("projectilecontainer").appendChild(singleProjectile);
   }
-  projectile.id = projectileID
-  projectile.style.left = Square.X - 2.5 + "px"; // 2.5 is projectile radius
-  projectile.style.top = Square.Y - 2.5 + "px";
-  document.getElementById("projectilecontainer").appendChild(projectile);
   if (aiming) {
     let sin_ang = 0;
     let cos_ang = 0;
     let velY = 0;
     let velX = 0;
-    const weapon = weapons.current;
     if (trackMouse) {
       const MouserelX = Mouse.relX;
       const MouserelY = Mouse.relY;
       const mousedist = Math.sqrt(MouserelX * MouserelX + MouserelY * MouserelY);
-
       sin_ang = MouserelY / mousedist;
       cos_ang = MouserelX / mousedist;
       velY = weapon.vel * scale * sin_ang;
@@ -511,17 +555,44 @@ function makeprojectile(aiming = false) {
       velY = Square.Cannon.vel * sin_ang;
       velX = Square.Cannon.vel * cos_ang;
     };
-    artillery.push({
-      id: projectileID,
-      elem: projectile,
-      X: Square.X,
-      Y: Square.Y,
-      Xvel: velX,
-      Yvel: velY,
-      grounded: false,
-      size: 5,
-      dmg: weapon.dmg,
-    });
+    if (weapon.inacc != 0) {
+      const perpendicularX = -velY;
+      const perpendicularY = velX;
+      for (let i = 0; i < weapon.projecMult; i++) { // there can only be multiple projectiles if there is an inaccuracy, because it would just act as 1 projectile if 100% accurate
+        projectileID ++;
+        const projectile = document.createElement("div");
+        projectile.className = "artillery";
+        projectile.id = projectileID
+        projectile.style.left = Square.X - 2.5 + "px"; // 2.5 is projectile radius
+        projectile.style.top = Square.Y - 2.5 + "px";
+        document.getElementById("projectilecontainer").appendChild(projectile);
+        const randomInacc = Math.random() * weapon.inacc * 2 - weapon.inacc;
+        artillery.push({
+          id: projectileID,
+          elem: projectile,
+          X: Square.X,
+          Y: Square.Y,
+          Xvel: velX + perpendicularX*randomInacc,
+          Yvel: velY + perpendicularY*randomInacc,
+          grounded: false,
+          size: 5,
+          dmg: weapon.dmg,
+        });
+      }
+    }
+    if (weapon.inacc == 0) { // if weapon is inaccurate, projectile will be created in the for loop above
+      artillery.push({
+        id: projectileID,
+        elem: singleProjectile,
+        X: Square.X,
+        Y: Square.Y,
+        Xvel: velX,
+        Yvel: velY,
+        grounded: false,
+        size: 5,
+        dmg: weapon.dmg,
+      });
+    }
   }
 }
 
