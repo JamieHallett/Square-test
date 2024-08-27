@@ -11,12 +11,13 @@ html {
 #inventory {
   top: 10%;
   left: 10%;
-  position: absolute;
+  position: fixed;
   height: 80%;
   width: 80%;
   background-color: #e5e5e5;
   visibility: hidden;
   z-index: 2;
+  overflow: auto;
 }
 
 .slider {
@@ -59,6 +60,20 @@ html {
   background-color: #616161;
 }
 
+.generic-item {
+  height: 10px;
+  width: 10px;
+  position: absolute;
+  background-color: #ffff0f;
+}
+
+.generic-machine {
+  height: 20px;
+  width: 20px;
+  position: absolute;
+  background-color: #303030;
+}
+
 /* The side navigation menu */
 .sidenav {
   height: 100%; /* 100% Full-height */
@@ -71,6 +86,7 @@ html {
   overflow-x: hidden; /* Disable horizontal scroll */
   padding-top: 60px; /* Place content 60px from the top */
   transition: 0.1s; /* 0.1 second transition effect to slide in the sidenav */
+  overflow: auto;
 }
 
 /* Position and style the close button (top right corner) */
@@ -80,4 +96,15 @@ html {
   right: 25px;
   font-size: 36px;
   margin-left: 50px;
+}
+
+#itemtable table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+}
+
+#itemtable table td, #itemtable table th {
+  border: 1px solid black;
+  text-align: left;
+  padding: 8px;
 }
