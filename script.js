@@ -1,6 +1,6 @@
 const degToRad = Math.PI/180;
 const scale = 0.25; // 1m/s = 0.25px/10ms 1m = 25px
-const loopfreq = 100;
+const loopfreq = 100; // 100hz
 const floorY = 440;
 let right = 0;
 let left = 0;
@@ -55,6 +55,33 @@ let typing = false;
 let projectileID = 0;
 let itemID = 0;
 let artillery = [];
+const storageUI = {
+  pane: false,
+  parentLocation: "machines",
+  location: "magic_smelter#1",
+  realParents: {
+    get machines() {return universe.machines},
+    get items() {return inventoryItems},
+  },
+  getStorage: function () {return (this.realParents[this.parentLocation])[this.location]},
+  open: function () {this.pane = true; const paneStyle = document.getElementById("storageaccessUI").style; paneStyle.width = "250px"; paneStyle.paddingLeft = "8px";},
+  close: function () {this.pane = false; const paneStyle = document.getElementById("storageaccessUI").style; paneStyle.width = "0px"; paneStyle.paddingLeft = "0px";},
+  update: function () {
+    const storagename = document.getElementById("storagename");
+    storagename.innerText = JSON.stringify(this.getStorage(), null, 2);
+    updInventoryTable(this.getStorage().storage, "accessedtable");
+  },
+  setToMouseoverMachine: function () {
+    for (const [name, obj] of Object.entries(universe.machines)) {
+      if (collision(Mouse, obj, true)) {
+        this.parentLocation = "machines";
+        this.location = name;
+        this.update();
+        return
+      }
+    }
+  },
+};
 const inventoryItems = {
   ammo_a: {
     name: "ammo_a",
@@ -76,14 +103,14 @@ const inventoryItems = {
     unique: false,
     mult: 20
   },
-}
+};
 const universe = {
   get Square() {return Square;},
   get OtherSquare() {return OtherSquare;},
   get Projectiles() {return artillery;},
   items: {},
   machines: {},
-}
+};
 const weapons = {
   code: "c", // this is the default weapon
   get current() {return weapons[weapons.code]},
@@ -127,6 +154,16 @@ const weapons = {
     inacc: 0.05, // measured in radians (but it breaks down at higher values)
     projecMult: 8,
   },
+  e: {
+    rate: 20,
+    interval: 50,
+    dmg: 30,
+    dmgrange: {start: 25, end: 75, endval : 15},
+    vel: 200,
+    auto: false,
+    inacc: 0,
+    projecMult: 1,
+  },
   testwave: {
     rate: 2,
     interval: 500,
@@ -147,7 +184,17 @@ const weapons = {
     inacc: 0.02, // inaccuracy with only 1 projectile
     projecMult: 1,
   },
-}
+  testlagmaker: {
+    rate: 500,
+    interval: 2,
+    dmg: 1,
+    dmgrange: {start: 50, end: 150, endval : 1},
+    vel: 950,
+    auto: true,
+    inacc: 0,
+    projecMult: 1,
+  },
+};
 let firingIntervalID = 0;
 let canFire = true;
 const itemdb = {
@@ -155,61 +202,101 @@ const itemdb = {
     title: "Ammo A",
     desc: "Heavy ammunition for weapon A.",
     unique: false,
+    type: "resource",
     methods: ["item_drop"],
+    mass: 0.1,
+    volume: 0.000_056,
   },
   ammo_b: {
     title: "Ammo B",
     desc: "Medium ammunition for weapon B.",
     unique: false,
+    type: "resource",
     methods: ["item_drop"],
+    mass: 0.02,
+    volume: 0.000_01,
   },
   ammo_c: {
     title: "Ammo C",
     desc: "Light rifle ammunition for weapon C.",
     unique: false,
+    type: "resource",
     methods: ["item_drop"],
+    mass: 0.01,
+    volume: 0.000_005,
   },
   ammo_d: {
     title: "Ammo D",
     desc: "Ammunition for weapon D, containing several small projectiles.",
     unique: false,
+    type: "resource",
     methods: ["item_drop"],
+    mass: 0.034,
+    volume: 0.000_018,
   },
   ammo_e: {
     title: "Ammo E",
-    desc: "There is no weapon that fires this, making it somewhat useless.",
+    desc: "There is no weapon that fires this (yet), making it somewhat useless.",
     unique: false,
+    type: "resource",
     methods: ["item_drop"],
+    mass: 0.02,
+    volume: 0.000_01,
   },
   iron_ore: {
     title: "Iron Ore",
     desc: "A rock with a high % of iron, as well as oxygen. Can be refined using carbon, or more advanced methods.",
     unique: false,
+    type: "material",
     methods: ["item_drop"],
+    mass: 1,
+    volume: 0.4,
+    hardness: 5.5,
+    melting_point: 1838,
   },
   iron: {
     title: "Iron",
     desc: "Mostly pure iron. Stronger than most other metals, but not known for being light.",
     unique: false,
+    type: "material",
     methods: ["item_drop"],
+    mass: 1,
+    volume: 0.125,
+    hardness: 4.5,
+    melting_point: 1811
   },
   carbon: {
     title: "Carbon",
-    desc: "Carbon loosely held together, like charcoal. Ideal for combustion and for refnery of some metals.",
+    desc: "Carbon with no crystalline structure, like charcoal. Ideal for combustion and for refnery of some metals.",
     unique: false,
+    type: "material_nomelting",
     methods: ["item_drop"],
+    mass: 1,
+    volume: 0.9,
+    hardness: 3,
+    melting_point: 800, // This item is set to no melting, so this is the ignition temperature
   },
   lead_ore: {
     title: "Lead Ore",
     desc: "A rock with a high % of lead, as well as sulphur and maybe even silver. Can be refined using carbon, or more advanced methods.",
     unique: false,
+    type: "material",
     methods: ["item_drop"],
+    mass: 1,
+    volume: 0.13,
+    hardness: 2.5,
+    melting_point: 1387,
   },
   lead: {
     title: "Lead",
     desc: "A soft and malleable metal with a high density. Used in ammunition and simple rechargable batteries.",
     unique: false,
+    type: "material",
     methods: ["item_drop"],
+    mass: 1,
+    volume: 0.09,
+    hardness: 1.5,
+    melting_point: 600,
   },
   magic_smelter: {
     title: "magic smelter",
@@ -219,36 +306,55 @@ const itemdb = {
     methods: ["machine_place", "item_drop"],
     in_out: {
       iron_ore: {
+        in: "iron_ore",
         in_amount: 1,
         out: "iron",
         out_amount: 1,
         other_required: [],
+        other_quantity: [],
         byproducts: [],
+        byproduct_quantity: [],
+        interval: 100
       },
       lead_ore: {
+        in: "lead_ore",
         in_amount: 1,
         out: "lead",
         out_amount: 1,
         other_required: [],
+        other_quantity: [],
         byproducts: [],
+        byproduct_quantity: [],
+        interval: 100
       },
     },
-    storages: {
-      in: {
-        type: "non_specific", // any item can be placed in this storage
-        max_stack: 100,
-      },
-      out: {
-        type: "no_input", // player cannot place items in this storage
-        max_stack: 100,
-      },
+    storage: {
+      max_volume: 200,
+      drop_on_pickup: false,
+    },
+  },
+  magic_iron_ore_machine: {
+    title: "magic iron ore maker",
+    desc: "creates iron ore for free",
+    unique: true,
+    type: "factory",
+    methods: ["machine_place", "item_drop"],
+    out_free: {
+      iron_ore: {
+        out: "iron_ore",
+        interval: 100,
+      }
+    },
+    storage: {
+      max_volume: 200,
+      drop_on_pickup: true,
     },
   },
   example: {
-    title: "The title of the item",
-    desc: "The description of the item",
+    title: "Example Item",
+    desc: "If you are reading this, this item is not in the database (unless the internal name is 'example')",
     unique: true, // if item is unique, it cannot be stacked
-    type: "item", // type of item, can be "factory", "building", or "item" 
+    type: "resource", // type of item, can be "factory", "building", "resource", "material", "material_nomelting"
     methods: ["item_drop"], // methods that can be used on this item
   },
 };
@@ -355,11 +461,11 @@ function closeInventory() {
   document.getElementById("inventory").style.visibility = "hidden";
 }
 
-function updInventoryTable(json = inventoryItems) {
+function updInventoryTable(json = inventoryItems, containername = "itemtable") {
   // Get the container element where the table will be inserted
-  let container = document.getElementById("itemtable");
+  let container = document.getElementById(containername);
 
-     // Create the table element
+  // Create the table element
   let table = document.createElement("table");
 
   // these are the names of the column headers
@@ -370,13 +476,13 @@ function updInventoryTable(json = inventoryItems) {
     "Actions",
     "Internal ID",
   ];
-  
+
   // this is how each column of the table body is created
   const columnFuncs = [
-    (name) => itemdb[name].title,
-    (name) => itemdb[name].desc,
-    (name) => json[name].mult,
-    (name) => {
+    (name) => (itemdb[name] || itemdb.example).title, // || itemdb[name.split("#")]
+    (name) => (itemdb[name] || itemdb.example).desc,
+    (name) => (json[name] || {mult:"-"}).mult, // if item is unique, name will not be in json and so mult will be "-"
+    (name, idname) => {
       // create button(s) for each action, put in container, return container
       const btncontainer = document.createElement("div");
       /*const btn = document.createElement("button");
@@ -385,17 +491,19 @@ function updInventoryTable(json = inventoryItems) {
       btn.onclick = function() {
         alert("I lied, this is not nothing");
       };*/
-      itemdb[name].methods.forEach((methodName) => {
+      //console.log(name,itemdb[name]); //debug
+      (itemdb[name] || itemdb.example).methods.forEach((methodName) => {
         const btn = document.createElement("button");
         btn.innerText = methodName;
         btncontainer.appendChild(btn);
         btn.onclick = function() {
-          itemMethodDB[methodName](name, Square);
+          itemMethodDB[methodName](idname || name, Square); // uses name with id if that exists
+          updInventoryTable() // update inventory table in case something changes
         };
       });
       return btncontainer;
     },
-    (name) => name,
+    (name, idname) => idname || name, // uses name with id if that exists
   ];
 
      // Create the header element
@@ -412,18 +520,17 @@ function updInventoryTable(json = inventoryItems) {
   table.append(tr) // Append the header to the table
   
   // Loop through the JSON data and create table rows
-  Object.values(json).forEach((item) => {
+  Object.entries(json).forEach((key_item) => {
     let tr = document.createElement("tr");
-    // Get the values of the current object in the JSON data
-    let vals = Object.values(item);
     // Loop through the values and create table cells
     columnFuncs.forEach((func) => {
-      const text = func(item.name); // The functions return the text to be displayed in each cell
+      const text = func(key_item[1].name, key_item[0]); // The functions return the text to be displayed in each cell
       if (["string", "number"].includes(typeof text)) {
         const td = document.createElement("td");
         td.innerText = text; // Set the text of the cell to the value returned by the function
         tr.appendChild(td);
       } else {
+        console.log(text)
         const td = document.createElement("td");
         td.appendChild(text); // In this case, text is actually a div element, so append that to the cell
         tr.appendChild(td); // Append the table cell to the table row
@@ -498,6 +605,14 @@ document.addEventListener('keyup', (event) => {
         if (!inventory) {openInventory()}
         else {closeInventory()}
         break;
+      case "u":
+        if (!storageUI.pane) {storageUI.open(); storageUI.update();}
+        else {storageUI.close()}
+        break;
+
+      case "g":
+        storageUI.setToMouseoverMachine()
+        break;
       case "t":
         teleport(); // by default teleports othersquare to mouse
         break;
@@ -515,9 +630,29 @@ document.addEventListener('keyup', (event) => {
         break;
       case "e":
         pickItem();
+        if (inventory) {updInventoryTable()}
         break;
       case "k":
-        dropItem(prompt("enter item name to drop"), Number(prompt("enter number to drop")) || 1);
+        dropItem(prompt("enter item internal ID to drop"), Number(prompt("enter quantity to drop")) || 1);
+        if (inventory) {updInventoryTable()}
+        break;
+      case "[":
+        makeItem("magic_smelter", 275, 75)
+        break;
+      case "]":
+        makeItem("magic_iron_ore_machine", 275, 100)
+        break;
+      case "#":
+        storageUI.parentLocation = prompt("enter parent location");
+        storageUI.location = prompt("enter location");
+        storageUI.update();
+        break;
+      case "m":
+        alert(JSON.stringify(universe.machines, null, 2))
+        break;
+
+      default:
+        console.log("unrecognised key pressed:"+name);
         break;
     }
   }
@@ -673,12 +808,12 @@ function collisionPredict(obj1, obj2) { // here obj1 is always a point, and obj2
 
   for (let i = 0; i < 4; i++) {
     notaDotProduct.push(Math.sign(corners[i].X * obj1.Yvel - corners[i].Y * obj1.Xvel))
-  }; // this calculates if velocity vector is clockwise or counterclockwise from the corner vector
+  }; // this calculates if velocity vector is clockwise or counterclockwise from the corner vector (dot products don't use subtraction)
 
   //console.log(notaDotProduct);
   
   if (new Set(notaDotProduct).size > 1)
-  {return true}; // if corner angles are only clockwise or only counterclockwise of velocity vector, return true
+  {return true}; // if corner angles have at least 1 clockwise and counterclockwise of velocity vector, return true
   
   return false; // if the above did not return true
 } 
@@ -896,12 +1031,14 @@ function pickItem(obj = Square) {
 }
 
 function dropItem(itemname, quantity = 1, obj = Square) {
+  if (quantity == 0) {return}; // if 0 items will be dropped, end function early
   const item = inventoryItems[itemname];
+  console.log(item,itemname); //debug
   if (item) { // if it exists
     if (item.unique) {
       // if unique, delete and make into element
-      delete inventoryItems[item];
-      makeItem(null, obj.X, obj.Y, item);
+      delete inventoryItems[itemname];
+      makeItem(itemname.split("#")[0], obj.X, obj.Y, itemname); // name has to be defined for item pickup to work, so gets defined along with override
     } else {
       // if not unique, remove quantity and make into element with quantity
       if (inventoryItems[item.name].mult < quantity) {
@@ -918,16 +1055,21 @@ function dropItem(itemname, quantity = 1, obj = Square) {
   }
 }
 
-function placeMachine(name, fromInventory = true,  obj = Square) {
+function placeMachine(name, fromInventory = true,  obj = Square, dontOverrideID = false) {
   if (fromInventory) {
-    if (inventoryItems[name.item]) {
-      delete inventoryItems[name.item];
+    if (inventoryItems[name]) {
+      delete inventoryItems[name];
     } else {
       return // return if not in inventory
     }
   }
-  itemID++;
-  const machineName = name + "#" + itemID;
+  let machineName
+  if (dontOverrideID) {
+    itemID++;
+    machineName = name + "#" + itemID;
+  } else {
+    machineName = name
+  }
   const item = document.createElement("div");
   item.className = "generic-machine";
   item.id = machineName;
@@ -941,7 +1083,99 @@ function placeMachine(name, fromInventory = true,  obj = Square) {
     Y: obj.Y,
     size: 20,
     unique: true,
+    storage: {},
+    in_outProcesses: {},
+    out_freeProcesses: {},
   };
+}
+
+/*
+function runMachines() {
+  const factories = []
+  const buildings = []
+  for (const [key, value] of Object.entries(universe.machines)) {
+    if (value.type == "factory") {factories.push(key)}
+    else {buildings.push(key)}
+  };
+  runFactories(factories)
+  //runBuildings(buildings)
+}
+
+function runFactories(factories) {
+  factories.forEach(runFactory);
+}
+
+function runFactory(factory) {
+  const factorydata = itemdb[factory];
+  if (factorydata.in_out) {
+    for (const [key, value] of factorydata.in_out) {
+      if (factory.storage[value.in]) {
+        
+      };
+    };
+  };
+  if (factorydata.out_free) {
+    factorydata.out_free.out
+  };
+}
+*/
+
+function setFactoryProcessIn_Out(factory, processName) {
+  console.log("process started " + processName)
+  const factoryName = (factory.name).split("#")[0]; // removes the id from the factory name
+  const factorydata = itemdb[factoryName];
+  const factoryStorage = factory.storage;
+  const inOut = factorydata.in_out[processName];
+  factory.in_outProcesses[processName] = setInterval(() => {
+    if (!factoryStorage[inOut.in] || factoryStorage[inOut.in].quantity < inOut.in_amount) { // if process cannot be sustained, end process
+      clearInterval(factory.in_outProcesses[processName]);
+      console.log("process ended " + processName);
+      return;
+    };
+    subtractFactoryStorage(factory.name, inOut.in, inOut.in_amount);
+    addFactoryStorage(factory.name, {name: inOut.out, size: 10, unique: itemdb[inOut.out].unique, mult: inOut.out_amount} ,inOut.out_amount)
+  }, inOut.interval);
+}
+
+function setFactoryProcessOut_Free(factory, processName) {
+  console.log("process started " + processName)
+  const factoryName = (factory.name).split("#")[0]; // removes the id from the factory name
+  const factorydata = itemdb[factoryName];
+  const factoryStorage = factory.storage;
+  const outFree = factorydata.out_free[processName];
+  factory.out_freeProcesses[processName] = setInterval(() => {
+    addFactoryStorage(factory.name, {name: outFree.out, size: 10, unique: itemdb[outFree.out].unique, mult: 1} ,1)
+  }, outFree.interval);
+}
+
+function addFactoryStorage(factoryName = "magic_smelter#1", item, quantity) {
+  const storedItem = universe.machines[factoryName].storage[item.name];
+  if (storedItem) { // if item exists in storage, add quantity
+    universe.machines[factoryName].storage[item.name].mult += quantity;
+  } else { // if item does not exist in storage, add it
+    universe.machines[factoryName].storage[item.name] = item; // assumes that item.mult == quantity
+  }
+}
+
+function subtractFactoryStorage(factoryName = "magic_smelter#1", itemName, quantity) {
+  //console.log(factoryName, universe.machines, universe.machines[factoryName]);
+  const item = universe.machines[factoryName].storage[itemName];
+  if (item) { // if it exists
+    if (item.unique) {
+      // if unique, delete
+      delete universe.machines[factoryName].storage[itemName];
+    } else {
+      // if not unique, remove quantity and delete if 0 or less quantity left
+      if (universe.machines[factoryName].storage[itemName].mult < quantity) {
+        delete universe.machines[factoryName].storage[itemName];
+        return;
+      }
+      universe.machines[factoryName].storage[itemName].mult -= quantity;
+      if (universe.machines[factoryName].storage[itemName].mult <= 0) {
+        delete universe.machines[factoryName].storage[itemName];
+      }
+    }
+  }
 }
 
 setInterval(loop, 1/loopfreq);

@@ -3,9 +3,14 @@ html {
   width: 100%;
 }
 
+body {
+  margin: 0;
+}
+
 #main {
   height: 100%;
   width: 100%;
+  margin: 8px;
 }
 
 #inventory {
@@ -81,7 +86,7 @@ html {
   position: fixed; /* Stay in place */
   z-index: 1; /* Stay on top */
   top: 0; /* Stay at the top */
-  right: 0;
+  /*left and right are not defined here, instead assigned to the element id*/
   background-color: #dfdfdf;
   overflow-x: hidden; /* Disable horizontal scroll */
   padding-top: 60px; /* Place content 60px from the top */
@@ -98,12 +103,21 @@ html {
   margin-left: 50px;
 }
 
-#itemtable table {
+#mySidenav {
+  right: 0;
+}
+
+#storageaccessUI {
+  left: 0;
+  padding-left: 0px;
+}
+
+.tablecontainer table {
   font-family: arial, sans-serif;
   border-collapse: collapse;
 }
 
-#itemtable table td, #itemtable table th {
+.tablecontainer table td, .tablecontainer table th {
   border: 1px solid black;
   text-align: left;
   padding: 8px;
