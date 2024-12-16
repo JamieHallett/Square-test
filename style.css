@@ -15,14 +15,15 @@ body {
 
 #inventory {
   top: 10%;
-  left: 10%;
+  left: 20%;
   position: fixed;
   height: 80%;
-  width: 80%;
+  width: 60%;
   background-color: #e5e5e5;
   visibility: hidden;
   z-index: 2;
   overflow: auto;
+  opacity: 0.9;
 }
 
 .slider {
@@ -92,6 +93,7 @@ body {
   padding-top: 60px; /* Place content 60px from the top */
   transition: 0.1s; /* 0.1 second transition effect to slide in the sidenav */
   overflow: auto;
+  opacity: 0.9;
 }
 
 /* Position and style the close button (top right corner) */
