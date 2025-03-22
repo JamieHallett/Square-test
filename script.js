@@ -1,4 +1,4 @@
-const degToRad = Math.PI/180;
+const degToRad = Math.PI / 180;
 const scale = 0.25; // 1m/s = 0.25px/10ms 1m = 25px
 const loopfreq = 100; // 100hz
 const floorY = 440;
@@ -10,8 +10,12 @@ const Main = document.getElementById("main");
 const Mouse = {
   X: 0,
   Y: 0,
-  get relX() {return Mouse.X - Square.X}, // relative to square
-  get relY() {return Mouse.Y - Square.Y},
+  get relX() {
+    return Mouse.X - Square.X;
+  }, // relative to square
+  get relY() {
+    return Mouse.Y - Square.Y;
+  },
 };
 let trackMouse = true;
 const Square = {
@@ -26,7 +30,8 @@ const Square = {
   sizetospd: 0.172,
   size: 25, // in pixels
   grounded: false,
-  Cannon: { // no longer used
+  Cannon: {
+    // no longer used
     angle: 0,
     vel: 75,
   },
@@ -38,12 +43,12 @@ const OtherSquare = {
   Xvel: 0,
   Yvel: 0,
   size: 25,
-  hit: function(dmg) {
-    console.log(dmg)
+  hit: function (dmg) {
+    console.log(dmg);
     OtherSquare.elem.style.backgroundColor = "#800000"; // dark red
-    setTimeout(function() {
+    setTimeout(function () {
       OtherSquare.elem.style.backgroundColor = "#050505"; // reset to standard square colour in 50ms
-    }, 50)
+    }, 50);
   },
 };
 let mode = false;
@@ -60,49 +65,82 @@ const storageUI = {
   parentLocation: "machines",
   location: "magic_smelter#1",
   realParents: {
-    get machines() {return universe.machines},
-    get items() {return inventoryItems},
+    get machines() {
+      return universe.machines;
+    },
+    get items() {
+      return inventoryItems;
+    },
   },
-  getStorage: function () {return (this.realParents[this.parentLocation])[this.location]},
-  open: function () {this.pane = true; const paneStyle = document.getElementById("storageaccessUI").style; paneStyle.width = "250px"; paneStyle.paddingLeft = "8px";},
-  close: function () {this.pane = false; const paneStyle = document.getElementById("storageaccessUI").style; paneStyle.width = "0px"; paneStyle.paddingLeft = "0px";},
-  update: function () { // update table inside the storage pane then update buttons with processes
+  getStorage: function () {
+    return this.realParents[this.parentLocation][this.location];
+  },
+  open() {
+    this.pane = true;
+    const paneStyle = document.getElementById("storageaccessUI").style;
+    paneStyle.width = "250px";
+    paneStyle.paddingLeft = "8px";
+    this.startAutoUpdate();
+  },
+  close() {
+    this.pane = false;
+    const paneStyle = document.getElementById("storageaccessUI").style;
+    paneStyle.width = "0px";
+    paneStyle.paddingLeft = "0px";
+    this.stopAutoUpdate();
+  },
+  update: function () {
+    // update table inside the storage pane then update buttons with processes
     const storagecontainer = document.getElementById("storagename");
-    const storageloc = this.getStorage()
+    const storageloc = this.getStorage();
     storagecontainer.innerText = JSON.stringify(storageloc, null, 2);
     updInventoryTable(storageloc.storage, "accessedtable");
     this.updMachineProcessButtons();
+  },
+  autoUpdateID: 0,
+  startAutoUpdate() {
+    this.autoUpdateID = setInterval(() => {
+      updInventoryTable(this.getStorage().storage, "accessedtable");
+    }, 10);
+  },
+  stopAutoUpdate() {
+    clearInterval(this.autoUpdateID);
   },
   updMachineProcessButtons: function () {
     const btncontainer = document.getElementById("processcontainer");
     btncontainer.replaceChildren(); // remove all existing buttons by replacing with nothing
     const storageloc = this.getStorage();
     const db = itemdb[storageloc.name.split("#")[0]];
-    for (const [processName, process] of Object.entries(db.in_out || {})) { // create button for each process
+    for (const [processName, process] of Object.entries(db.in_out || {})) {
+      // create button for each process
       const btn = document.createElement("button");
       btn.innerText = "In out " + processName;
       btncontainer.appendChild(btn);
-      btn.onclick = function() { // startup process on click
+      btn.onclick = function () {
+        // startup process on click
         setFactoryProcessIn_Out(storageloc, processName);
       };
-    };
-    for (const [processName, process] of Object.entries(db.out_free || {})) { // repeat for out_free
+    }
+    for (const [processName, process] of Object.entries(db.out_free || {})) {
+      // repeat for out_free
       const btn = document.createElement("button");
       btn.innerText = "Free output " + processName;
       btncontainer.appendChild(btn);
-      btn.onclick = function() { // startup process on click
-        setFactoryProcessOut_Free(storageloc.name, processName);
+      btn.onclick = function () {
+        // startup process on click
+        setFactoryProcessOut_Free(storageloc, processName);
       };
-    };
+    }
     // repeat for out_free
   },
-  setToMouseoverMachine: function () { // sets storage location to the factory that is being moused over
+  setToMouseoverMachine: function () {
+    // sets storage location to the factory that is being moused over
     for (const [name, obj] of Object.entries(universe.machines)) {
       if (collision(Mouse, obj, true)) {
         this.parentLocation = "machines";
         this.location = name;
         this.update();
-        return
+        return;
       }
     }
   },
@@ -132,23 +170,31 @@ const inventoryItems = {
     name: "weapon_c",
     unique: true,
     mult: 1,
-  }
+  },
 };
 const universe = {
-  get Square() {return Square;},
-  get OtherSquare() {return OtherSquare;},
-  get Projectiles() {return artillery;},
+  get Square() {
+    return Square;
+  },
+  get OtherSquare() {
+    return OtherSquare;
+  },
+  get Projectiles() {
+    return artillery;
+  },
   items: {},
   machines: {},
 };
 const weapons = {
   code: "c", // this is the default weapon
-  get current() {return weapons[weapons.code]},
+  get current() {
+    return weapons[weapons.code];
+  },
   a: {
     rate: 4.16,
     interval: 240,
     dmg: 115,
-    dmgrange: {start: 100, end: 225, endval : 100},
+    dmgrange: { start: 100, end: 225, endval: 100 },
     vel: 950,
     auto: false,
     inacc: 0,
@@ -158,7 +204,7 @@ const weapons = {
     rate: 9,
     interval: 110,
     dmg: 45,
-    dmgrange: {start: 75, end: 150, endval : 35},
+    dmgrange: { start: 75, end: 150, endval: 35 },
     vel: 950,
     auto: true,
     inacc: 0,
@@ -168,7 +214,7 @@ const weapons = {
     rate: 13,
     interval: 75,
     dmg: 35,
-    dmgrange: {start: 50, end: 150, endval : 30},
+    dmgrange: { start: 50, end: 150, endval: 30 },
     vel: 950,
     auto: true,
     inacc: 0,
@@ -178,7 +224,7 @@ const weapons = {
     rate: 10,
     interval: 100,
     dmg: 30,
-    dmgrange: {start: 25, end: 75, endval : 20},
+    dmgrange: { start: 25, end: 75, endval: 20 },
     vel: 400,
     auto: false,
     inacc: 0.05, // max inaccuracy measured in radians (but it breaks down at higher values)
@@ -188,7 +234,7 @@ const weapons = {
     rate: 20,
     interval: 50,
     dmg: 30,
-    dmgrange: {start: 25, end: 75, endval : 15},
+    dmgrange: { start: 25, end: 75, endval: 15 },
     vel: 200,
     auto: false,
     inacc: 0,
@@ -198,7 +244,7 @@ const weapons = {
     rate: 2,
     interval: 500,
     dmg: 1,
-    dmgrange: {start: 25, end: 75, endval : 20},
+    dmgrange: { start: 25, end: 75, endval: 20 },
     vel: 40,
     auto: true,
     inacc: 0.2,
@@ -208,7 +254,7 @@ const weapons = {
     rate: 50,
     interval: 20,
     dmg: 35,
-    dmgrange: {start: 50, end: 150, endval : 30},
+    dmgrange: { start: 50, end: 150, endval: 30 },
     vel: 950,
     auto: true,
     inacc: 0.02, // inaccuracy with only 1 projectile
@@ -218,7 +264,7 @@ const weapons = {
     rate: 500,
     interval: 2,
     dmg: 1,
-    dmgrange: {start: 50, end: 150, endval : 1},
+    dmgrange: { start: 50, end: 150, endval: 1 },
     vel: 950,
     auto: true,
     inacc: 0,
@@ -230,7 +276,7 @@ let canFire = true;
 const itemdb = {
   weapon_a: {
     title: "Weapon A",
-    desc: "Massive weapon designed to destroy many things",
+    desc: "Massive weapon designed to destroy many things, mostly vehicles.",
     unique: true,
     type: "construct",
     tags: ["takes_attachments", "weapon"],
@@ -361,7 +407,7 @@ const itemdb = {
     mass: 1,
     volume: 0.000_125,
     hardness: 4.5,
-    melting_point: 1811
+    melting_point: 1811,
   },
   carbon: {
     title: "Carbon",
@@ -399,6 +445,42 @@ const itemdb = {
     hardness: 1.5,
     melting_point: 600,
   },
+  tungsten_ore: {
+    title: "Tungsten Ore",
+    desc: "A rock containing tungsten, as well as calcium. ",
+    unique: false,
+    type: "material",
+    tags: [],
+    methods: ["item_drop"],
+    mass: 1,
+    volume: 0.000_164,
+    hardness: 4.5,
+    melting_point: 3695, // I couldn't find the melting point of tungsten ore, so I used the melting point of tungsten
+  },
+  tungsten: {
+    title: "Tungsten",
+    desc: "The hardest and most heat resistant metal known, with an exceptionally high density. Used in high performance tools, ammunition, armour, everything.",
+    unique: false,
+    type: "material",
+    tags: [],
+    methods: ["item_drop"],
+    mass: 1,
+    volume: 0.000_052,
+    hardness: 7.5,
+    melting_point: 3695,
+  },
+  tungsten_carbide: {
+    title: "Tungsten Carbide",
+    desc: "A compound of tungsten and carbon, with a hardness only surpassed by diamond. Used mostly in cutting tools.",
+    unique: false,
+    type: "material",
+    tags: [],
+    methods: ["item_drop"],
+    mass: 1,
+    volume: 0.000_064,
+    hardness: 9.5,
+    melting_point: 3143,
+  },
 
   magic_smelter: {
     title: "magic smelter",
@@ -417,7 +499,7 @@ const itemdb = {
         other_quantity: [],
         byproducts: [],
         byproduct_quantity: [],
-        interval: 100
+        interval: 100,
       },
       lead_ore: {
         in: "lead_ore",
@@ -428,7 +510,7 @@ const itemdb = {
         other_quantity: [],
         byproducts: [],
         byproduct_quantity: [],
-        interval: 100
+        interval: 100,
       },
     },
     storage: {
@@ -458,17 +540,27 @@ const itemdb = {
     title: "Example Item",
     desc: "If you are reading this, this item is not in the database (unless the internal name is 'example')",
     unique: true, // if item is unique, it cannot be stacked
-    type: "construct", // type of item, can be "factory", "building", "construct", "material"
+    type: "construct", // type of item, can be "factory", "building", "construct", "material", "shape"
+    /* 
+    - factory is a machine that can be walked over and used to create or process items
+    - building cannot be walked over but works as a machine
+    - construct is an item made of multiple shapes
+    - shapes are single materials shaped into shapes, if it is not made of a single material it is made of an alloy
+    - material is a single material that can be used in a shape 
+    */
     tags: [], // miscellaneous data about the item
     methods: ["item_drop"], // methods that can be used on this item
     mass: 1, // in kg
-    volume: 0.001 // in m^3
+    volume: 0.001, // in m^3
   },
 };
 const itemMethodDB = {
-  machine_place: function (name, obj) {placeMachine(name, true, obj)},
-  item_drop: function (name, obj) {dropItem(name, Number(prompt("Enter amount to drop:")), obj)},
-  
+  machine_place: function (name, obj) {
+    placeMachine(name, true, obj);
+  },
+  item_drop: function (name, obj) {
+    dropItem(name, Number(prompt("Enter amount to drop:")), obj);
+  },
 };
 const assemblydb = {
   weapon_c: {
@@ -487,39 +579,39 @@ const assemblydb = {
 
 function squareleft(v) {
   Square.X -= v; //moves square left
-  Square.elem.style.left = Square.X - Square.size/2 + "px";
+  Square.elem.style.left = Square.X - Square.size / 2 + "px";
 }
 
 function squareright(v) {
   Square.X += v; //moves square right
-  Square.elem.style.left = Square.X - Square.size/2 + "px";
+  Square.elem.style.left = Square.X - Square.size / 2 + "px";
 }
 
 function squareup(v) {
   Square.Y -= v; //moves square up
-  Square.elem.style.top = Square.Y - Square.size/2 + "px";
+  Square.elem.style.top = Square.Y - Square.size / 2 + "px";
 }
 
 function squaredown(v) {
   Square.Y += v; //moves square down
-  Square.elem.style.top = Square.Y - Square.size/2 + "px";
+  Square.elem.style.top = Square.Y - Square.size / 2 + "px";
 }
 
 function objUp(obj, v) {
   obj.Y -= v; //moves object up
-  obj.elem.style.top = obj.Y - obj.size/2 + "px";
+  obj.elem.style.top = obj.Y - obj.size / 2 + "px";
 }
 function objDown(obj, v) {
   obj.Y += v; //moves object down
-  obj.elem.style.top = obj.Y - obj.size/2 + "px";
+  obj.elem.style.top = obj.Y - obj.size / 2 + "px";
 }
 
 function toggletrackMouse() {
   trackMouse = !trackMouse;
   if (trackMouse) {
-    document.addEventListener("mousemove", trackmouse)
+    document.addEventListener("mousemove", trackmouse);
   } else {
-    document.removeEventListener("mousemove", trackmouse)
+    document.removeEventListener("mousemove", trackmouse);
   }
 }
 
@@ -536,13 +628,13 @@ output.innerHTML = slider.value; // Display the default slider value
 Square.speed = slider.value * Square.sizetospd;
 
 // Update the current slider value (each time you drag the slider handle)
-slider.oninput = function() {
+slider.oninput = function () {
   output.innerHTML = this.value;
   Square.elem.style.height = this.value + "px";
   Square.elem.style.width = this.value + "px";
   Square.size = this.value;
   Square.speed = this.value * Square.sizetospd;
-}
+};
 
 const slider2 = document.getElementById("cannonAngle");
 const output2 = document.getElementById("cannonAngValue");
@@ -550,32 +642,36 @@ const output2 = document.getElementById("cannonAngValue");
 output2.innerHTML = slider2.value; // Display the default slider value
 
 // Update the current slider value (each time you drag the slider handle)
-slider2.oninput = function() {
+slider2.oninput = function () {
   output2.innerHTML = this.value;
   Square.Cannon.angle = this.value;
-}
+};
 
 /* Set the width of the side navigation to 250px */
 function openNav() {
-  menu = true
+  menu = true;
   document.getElementById("mySidenav").style.width = "250px";
 }
 
- /* Set the width of the side navigation to 0 */
+/* Set the width of the side navigation to 0 */
 function closeNav() {
-  menu = false
+  menu = false;
   document.getElementById("mySidenav").style.width = "0";
 }
 
 function openInventory() {
   inventory = true;
-  
-  const pane = document.getElementById("inventory")
-  
+
+  const pane = document.getElementById("inventory");
+
   pane.style.visibility = "visible";
-  pane.getElementsByTagName("pre")[0].innerHTML = JSON.stringify(inventoryItems, null, 2);
-  
-  updInventoryTable(inventoryItems)
+  pane.getElementsByTagName("pre")[0].innerHTML = JSON.stringify(
+    inventoryItems,
+    null,
+    2
+  );
+
+  updInventoryTable(inventoryItems);
 }
 
 function closeInventory() {
@@ -591,19 +687,13 @@ function updInventoryTable(json = inventoryItems, containername = "itemtable") {
   let table = document.createElement("table");
 
   // these are the names of the column headers
-  let cols = [
-    "Name",
-    "Description",
-    "Quantity",
-    "Actions",
-    "Internal ID",
-  ];
+  let cols = ["Name", "Description", "Quantity", "Actions", "Internal ID"];
 
   // this is how each column of the table body is created
   const columnFuncs = [
-    (name) => (itemdb[name] || itemdb.example).title, // || itemdb[name.split("#")]
+    (name) => (itemdb[name] || itemdb.example).title,
     (name) => (itemdb[name] || itemdb.example).desc,
-    (name) => (json[name] || {mult:"-"}).mult, // if item is unique, name will not be in json and so mult will be "-"
+    (name) => (json[name] || { mult: "-" }).mult, // if item is unique, name will not be in json and so mult will be "-"
     (name, idname) => {
       // create button(s) for each action, put in container, return container
       const btncontainer = document.createElement("div");
@@ -618,9 +708,9 @@ function updInventoryTable(json = inventoryItems, containername = "itemtable") {
         const btn = document.createElement("button");
         btn.innerText = methodName;
         btncontainer.appendChild(btn);
-        btn.onclick = function() {
+        btn.onclick = function () {
           itemMethodDB[methodName](idname || name, Square); // uses name with id if that exists
-          updInventoryTable() // update inventory table in case something changes
+          updInventoryTable(); // update inventory table in case something changes
         };
       });
       return btncontainer;
@@ -628,160 +718,179 @@ function updInventoryTable(json = inventoryItems, containername = "itemtable") {
     (name, idname) => idname || name, // uses name with id if that exists
   ];
 
-     // Create the header element
+  // Create the header element
   let thead = document.createElement("thead");
   let tr = document.createElement("tr");
 
-     // Loop through the column names and create header cells
+  // Loop through the column names and create header cells
   cols.forEach((item) => {
     let th = document.createElement("th");
     th.innerText = item; // Set the column name as the text of the header cell
     tr.appendChild(th); // Append the header cell to the header row
   });
   thead.appendChild(tr); // Append the header row to the header
-  table.append(tr) // Append the header to the table
-  
+  table.append(tr); // Append the header to the table
+
   // Loop through the JSON data and create table rows
   Object.entries(json).forEach((key_item) => {
     let tr = document.createElement("tr");
     // Loop through the values and create table cells
     columnFuncs.forEach((func) => {
-      const text = func(key_item[1].name, key_item[0]); // The functions return the text to be displayed in each cell
-      if (["string", "number"].includes(typeof text)) {
+      const content = func(key_item[1].name.split("#")[0], key_item[0]); // The functions return the content to be displayed in each cell
+      if (["string", "number"].includes(typeof content)) {
         const td = document.createElement("td");
-        td.innerText = text; // Set the text of the cell to the value returned by the function
+        td.innerText = content; // Set the text of the cell to the value returned by the function
         tr.appendChild(td);
       } else {
         //console.log(text, func);
         const td = document.createElement("td");
-        td.appendChild(text); // In this case, text is actually a div element, so append that to the cell
+        td.appendChild(content); // In this case, content is actually a div element, so append that to the cell
         tr.appendChild(td); // Append the table cell to the table row
       }
     });
     table.appendChild(tr); // Append the table row to the table
   });
-  container.replaceChildren(table) // Put the table in its container element
-};
-
+  container.replaceChildren(table); // Put the table in its container element
+}
 
 // Add event listener on keydown
-document.addEventListener('keydown', (event) => {
-  const name = event.key;
-  // const code = event.code;
-  // Alert the key name and key code on keydown
-  // alert(`Key pressed ${name} \r\n Key code value: ${code}`);
-  
-  if (!typing) {
-    switch (name.toLowerCase()) {
-      case "a":
-        left = 1;
-        break;
-      case "d":
-        right = 1;
-        break;
-      case "w":
-        up = 1;
-        break;
-      case "s":
-        down = 1;
-        break;
+document.addEventListener(
+  "keydown",
+  (event) => {
+    const name = event.key;
+    // const code = event.code;
+    // Alert the key name and key code on keydown
+    // alert(`Key pressed ${name} \r\n Key code value: ${code}`);
 
-      case " ":
-        jump();
-        break;
-      case "b":
-        setFiring(true)
-        break;
+    if (!typing) {
+      switch (name.toLowerCase()) {
+        case "a":
+          left = 1;
+          break;
+        case "d":
+          right = 1;
+          break;
+        case "w":
+          up = 1;
+          break;
+        case "s":
+          down = 1;
+          break;
+
+        case " ":
+          jump();
+          break;
+        case "v":
+          setFiring(true);
+          break;
+      }
     }
-  }
-    
-}, false);
+  },
+  false
+);
 
-document.addEventListener('keyup', (event) => {
-  const name = event.key;
-  
-  if (!typing) {
-    switch (name.toLowerCase()) {
-      case "a":
-        left = 0;
-        break;
-      case "d":
-        right = 0;
-        break;
-      case "w":
-        up = 0;
-        break;
-      case "s":
-        down = 0;
-        break;
+document.addEventListener(
+  "keyup",
+  (event) => {
+    const name = event.key;
 
-      case "b":
-        setFiring(false);
-        break;
+    if (!typing) {
+      switch (name.toLowerCase()) {
+        case "a":
+          left = 0;
+          break;
+        case "d":
+          right = 0;
+          break;
+        case "w":
+          up = 0;
+          break;
+        case "s":
+          down = 0;
+          break;
 
-      case "c":
-        if (!menu) {openNav()}
-        else {closeNav()};
-        break;
-      case "i":
-        if (!inventory) {openInventory()}
-        else {closeInventory()}
-        break;
-      case "u":
-        if (!storageUI.pane) {storageUI.open(); storageUI.update();}
-        else {storageUI.close()}
-        break;
+        case "v":
+          setFiring(false);
+          break;
 
-      case "g":
-        storageUI.setToMouseoverMachine()
-        break;
-      case "t":
-        teleport(); // by default teleports othersquare to mouse
-        break;
-      case "r":
-        removprojecs();
-        break;
-      case "v":
-        makeprojectile(true);
-        break;
-      case "o":
-        makeItem("name");
-        break;
-      case "p":
-        makeItem("stackable", 100, 50, undefined, false);
-        break;
-      case "e":
-        pickItem();
-        if (inventory) {updInventoryTable()}
-        break;
-      case "k":
-        dropItem(prompt("enter item internal ID to drop"), Number(prompt("enter quantity to drop")) || 1);
-        if (inventory) {updInventoryTable()}
-        break;
-      case "[":
-        makeItem("magic_smelter", 275, 75)
-        break;
-      case "]":
-        makeItem("magic_iron_ore_machine", 275, 100)
-        break;
-      case "#":
-        storageUI.parentLocation = prompt("enter parent location");
-        storageUI.location = prompt("enter location");
-        storageUI.update();
-        break;
-      case "m":
-        alert(JSON.stringify(universe.machines, null, 2))
-        break;
+        case "c":
+          if (!menu) {
+            openNav();
+          } else {
+            closeNav();
+          }
+          break;
+        case "i":
+          if (!inventory) {
+            openInventory();
+          } else {
+            closeInventory();
+          }
+          break;
+        case "u":
+          if (!storageUI.pane) {
+            storageUI.open();
+            storageUI.update();
+          } else {
+            storageUI.close();
+          }
+          break;
 
-      default:
-        console.log("unrecognised key pressed:"+name);
-        break;
+        case "g":
+          storageUI.setToMouseoverMachine();
+          break;
+        case "t":
+          teleport(); // by default teleports othersquare to mouse
+          break;
+        case "r":
+          removprojecs();
+          break;
+        case "o":
+          makeItem("name");
+          break;
+        case "p":
+          makeItem("iron", 100, 50);
+          break;
+        case "e":
+          pickItem();
+          if (inventory) {
+            updInventoryTable();
+          }
+          break;
+        case "k":
+          dropItem(
+            prompt("enter item internal ID to drop"),
+            Number(prompt("enter quantity to drop")) || 1
+          );
+          if (inventory) {
+            updInventoryTable();
+          }
+          break;
+        case "[":
+          makeItem("magic_smelter", 275, 75);
+          break;
+        case "]":
+          makeItem("magic_iron_ore_machine", 275, 100);
+          break;
+        case "#":
+          storageUI.parentLocation = prompt("enter parent location");
+          storageUI.location = prompt("enter location");
+          storageUI.update();
+          break;
+        case "m":
+          alert(JSON.stringify(universe.machines, null, 2));
+          break;
+
+        default:
+          console.log("unrecognised key pressed:" + name);
+          break;
+      }
     }
-  }
-  
-}, false);
+  },
+  false
+);
 
-document.addEventListener("mousemove", trackmouse)
+document.addEventListener("mousemove", trackmouse);
 
 function loop() {
   movement();
@@ -808,38 +917,43 @@ function toggleGravity() {
 }
 
 function gravity(obj = Square) {
-  if (obj.Y > floorY - obj.size/2) {
+  if (obj.Y > floorY - obj.size / 2) {
     obj.grounded = true;
-    if (obj.Y > floorY - obj.size/2 + 1) {objUp(obj, 1)}
+    if (obj.Y > floorY - obj.size / 2 + 1) {
+      objUp(obj, 1);
+    }
+  } else {
+    obj.grounded = false;
   }
-  else {obj.grounded = false}
-  
+
   if (!obj.grounded) {
     obj.Yvel += 1;
-  }
-  else if (obj.grounded) {
+  } else if (obj.grounded) {
     obj.jumps = obj.maxJumps;
-    if (obj.Yvel > 0) {obj.Yvel = 0}
+    if (obj.Yvel > 0) {
+      obj.Yvel = 0;
+    }
   }
-  
-  objDown(obj, obj.Yvel*Square.speed/50); 
+
+  objDown(obj, (obj.Yvel * Square.speed) / 50);
   //moves object down by scale of the page
 }
 
 function teleport(obj = OtherSquare, destObj = Mouse) {
   obj.X = destObj.X;
   obj.Y = destObj.Y;
-  obj.elem.style.left = obj.X - obj.size/2+ "px";
-  obj.elem.style.top = obj.Y - obj.size/2 + "px";
+  obj.elem.style.left = obj.X - obj.size / 2 + "px";
+  obj.elem.style.top = obj.Y - obj.size / 2 + "px";
 }
 
-function movement() { // there may be an easier way to do this
+function movement() {
+  // there may be an easier way to do this
   let speed = Square.speed * scale;
-  
-  if (Math.abs((right-left) && (up-down)) == 1) {
-    speed *= Math.SQRT1_2 // this is run if moving both vertically and horizontally
+
+  if (Math.abs(right - left && up - down) == 1) {
+    speed *= Math.SQRT1_2; // this is run if moving both vertically and horizontally
   }
-  
+
   if (right == 1) {
     squareright(speed);
   }
@@ -864,55 +978,80 @@ function movement() { // there may be an easier way to do this
 function jump() {
   if (Square.jumps > 0) {
     Square.grounded = false;
-    Square.jumps --;
+    Square.jumps--;
     Square.Yvel = -50;
   }
 }
 
-function collision(obj1, obj2, obj1IsPoint=false) {
+function collision(obj1, obj2, obj1IsPoint = false) {
   const diffX = obj1.X - obj2.X;
   const diffY = obj1.Y - obj2.Y;
-  const dist = Math.sqrt(diffX*diffX + diffY*diffY);
-  if (dist > obj1.size + obj2.size) {return false}; // return if objects are way too far for collision
+  const dist = Math.sqrt(diffX * diffX + diffY * diffY);
+  if (dist > obj1.size + obj2.size) {
+    return false;
+  } // return if objects are way too far for collision
   if (obj1IsPoint) {
-    if (obj1.X > obj2.X - obj2.size/2 
-        && obj1.X < obj2.X + obj2.size/2 
-        && obj1.Y > obj2.Y - obj2.size/2 
-        && obj1.Y < obj2.Y + obj2.size/2 
-        ) // true if obj1's centre is within bounds of obj2
-    {return true}
+    if (
+      obj1.X > obj2.X - obj2.size / 2 &&
+      obj1.X < obj2.X + obj2.size / 2 &&
+      obj1.Y > obj2.Y - obj2.size / 2 &&
+      obj1.Y < obj2.Y + obj2.size / 2
+    ) {
+      // true if obj1's centre is within bounds of obj2
+      return true;
+    }
   } else {
-    if (obj1.X + obj1.size/2 > obj2.X - obj2.size/2 
-        && obj1.X - obj1.size/2 < obj2.X + obj2.size/2 
-        && obj1.Y + obj1.size/2 > obj2.Y - obj2.size/2 
-        && obj1.Y - obj1.size/2 < obj2.Y + obj2.size/2) // true if obj1's bounds are within bounds of obj2
-    {return true};
-  };
+    if (
+      obj1.X + obj1.size / 2 > obj2.X - obj2.size / 2 &&
+      obj1.X - obj1.size / 2 < obj2.X + obj2.size / 2 &&
+      obj1.Y + obj1.size / 2 > obj2.Y - obj2.size / 2 &&
+      obj1.Y - obj1.size / 2 < obj2.Y + obj2.size / 2
+    ) {
+      // true if obj1's bounds are within bounds of obj2
+      return true;
+    }
+  }
   return false;
 }
 
-function collisionPredict(obj1, obj2) { // here obj1 is always a point, and obj2 is assumed to be stationary
+function collisionPredict(obj1, obj2) {
+  // here obj1 is always a point, and obj2 is assumed to be stationary
   const diffX = obj1.X - obj2.X;
   const diffY = obj1.Y - obj2.Y;
-  const dist = Math.sqrt(diffX*diffX + diffY*diffY);
+  const dist = Math.sqrt(diffX * diffX + diffY * diffY);
 
-  if (collision(obj1, obj2, true)) {return true}; // if objects are already colliding, return true
-  
-  const spd = Math.sqrt(obj1.Xvel*obj1.Xvel + obj1.Yvel*obj1.Yvel);
-  
-  if (dist > spd*scale) {return false}; // if obj1 cannot reach obj2 in time, return false
-  
+  if (collision(obj1, obj2, true)) {
+    return true;
+  } // if objects are already colliding, return true
+
+  const spd = Math.sqrt(obj1.Xvel * obj1.Xvel + obj1.Yvel * obj1.Yvel);
+
+  if (dist > spd * scale) {
+    return false;
+  } // if obj1 cannot reach obj2 in time, return false
+
   //console.log(dist, spd*scale);
-    
-  const topleftcorner = {X: diffX - obj2.size/2, Y: diffY - obj2.size/2};
-  const toprightcorner = {X: diffX + obj2.size/2, Y: diffY - obj2.size/2};
-  const bottomleftcorner = {X: diffX - obj2.size/2, Y: diffY + obj2.size/2};
-  const botttomrightcorner = {X: diffX + obj2.size/2, Y: diffY + obj2.size/2};
 
-  const corners = [topleftcorner, toprightcorner, bottomleftcorner, botttomrightcorner];
-  
+  const topleftcorner = { X: diffX - obj2.size / 2, Y: diffY - obj2.size / 2 };
+  const toprightcorner = { X: diffX + obj2.size / 2, Y: diffY - obj2.size / 2 };
+  const bottomleftcorner = {
+    X: diffX - obj2.size / 2,
+    Y: diffY + obj2.size / 2,
+  };
+  const botttomrightcorner = {
+    X: diffX + obj2.size / 2,
+    Y: diffY + obj2.size / 2,
+  };
+
+  const corners = [
+    topleftcorner,
+    toprightcorner,
+    bottomleftcorner,
+    botttomrightcorner,
+  ];
+
   //const cornerAngs = [];
-  
+
   //console.log(corners);
 
   //const velAng = Math.atan2(obj1.Yvel, obj1.Xvel);
@@ -929,27 +1068,30 @@ function collisionPredict(obj1, obj2) { // here obj1 is always a point, and obj2
   const notaDotProduct = [];
 
   for (let i = 0; i < 4; i++) {
-    notaDotProduct.push(Math.sign(corners[i].X * obj1.Yvel - corners[i].Y * obj1.Xvel))
-  }; // this calculates if velocity vector is clockwise or counterclockwise from the corner vector (dot products don't use subtraction)
+    notaDotProduct.push(
+      Math.sign(corners[i].X * obj1.Yvel - corners[i].Y * obj1.Xvel)
+    );
+  } // this calculates if velocity vector is clockwise or counterclockwise from the corner vector (dot products don't use subtraction)
 
   //console.log(notaDotProduct);
-  
-  if (new Set(notaDotProduct).size > 1)
-  {return true}; // if corner angles have at least 1 clockwise and counterclockwise of velocity vector, return true
-  
+
+  if (new Set(notaDotProduct).size > 1) {
+    return true;
+  } // if corner angles have at least 1 clockwise and counterclockwise of velocity vector, return true
+
   return false; // if the above did not return true
-} 
+}
 
 function checkProjecColl() {
   for (let i = 0; i < artillery.length; i++) {
     if (collisionPredict(artillery[i], OtherSquare)) {
-      //setTimeout( () => 
-        {
+      //setTimeout( () =>
+      {
         const delProjec = artillery.splice(i, 1);
         i--;
         OtherSquare.hit(delProjec[0].dmg);
         delProjec[0].elem.remove();
-        }
+      }
       //, 10)
     }
   }
@@ -961,12 +1103,12 @@ function removsquare() {
 }
 
 function removprojecs() {
-  const len = artillery.length
+  const len = artillery.length;
   for (let i = 0; i < len; i++) {
     const removedElem = artillery.pop();
     removedElem.elem.remove();
   }
-  
+
   const elmnts = document.getElementById("projectilecontainer").childNodes;
   const len2 = elmnts.length;
   for (let i = 0; i < len2; i++) {
@@ -983,20 +1125,23 @@ function applyWeapon() {
   const inputElem = document.getElementById("enterweapon");
   weapons.code = inputElem.value;
 }
-  
+
 function setFiring(fireon) {
   if (!firing && fireon && canFire) {
     const currentWeapon = weapons.current;
     makeprojectile(true);
-    firingIntervalID = setInterval(
-      function() {
-        makeprojectile(true);
-        canFire = false;
-        setTimeout(() => {canFire = true}, currentWeapon.interval);
-      }, currentWeapon.interval)
+    firingIntervalID = setInterval(function () {
+      makeprojectile(true);
+      canFire = false;
+      setTimeout(() => {
+        canFire = true;
+      }, currentWeapon.interval);
+    }, currentWeapon.interval);
     firing = true;
     canFire = false;
-    setTimeout(() => {canFire = true}, currentWeapon.interval);
+    setTimeout(() => {
+      canFire = true;
+    }, currentWeapon.interval);
   } else if (!fireon) {
     clearInterval(firingIntervalID);
     firing = false;
@@ -1007,18 +1152,21 @@ function makeprojectile(aiming = false) {
   // the aiming parameter is for artillery / mouse-aimed projectiles
   let singleProjectile;
   const weapon = weapons.current;
-  if (!aiming || weapon.inacc == 0) { // if weapon is inaccurate, projectile element will be created in the for loop later
-    projectileID ++;
+  if (!aiming || weapon.inacc == 0) {
+    // if weapon is inaccurate, projectile element will be created in the for loop later
+    projectileID++;
     singleProjectile = document.createElement("div");
     if (aiming) {
       singleProjectile.className = "artillery";
     } else {
       singleProjectile.className = "projectile";
     }
-    singleProjectile.id = projectileID
+    singleProjectile.id = projectileID;
     singleProjectile.style.left = Square.X - 2.5 + "px"; // 2.5 is projectile radius
     singleProjectile.style.top = Square.Y - 2.5 + "px";
-    document.getElementById("projectilecontainer").appendChild(singleProjectile);
+    document
+      .getElementById("projectilecontainer")
+      .appendChild(singleProjectile);
   }
   if (aiming) {
     let sin_ang = 0;
@@ -1028,7 +1176,9 @@ function makeprojectile(aiming = false) {
     if (trackMouse) {
       const MouserelX = Mouse.relX;
       const MouserelY = Mouse.relY;
-      const mousedist = Math.sqrt(MouserelX * MouserelX + MouserelY * MouserelY);
+      const mousedist = Math.sqrt(
+        MouserelX * MouserelX + MouserelY * MouserelY
+      );
       sin_ang = MouserelY / mousedist;
       cos_ang = MouserelX / mousedist;
       velY = weapon.vel * scale * sin_ang;
@@ -1038,15 +1188,16 @@ function makeprojectile(aiming = false) {
       cos_ang = Math.cos(Square.Cannon.angle * degToRad);
       velY = Square.Cannon.vel * sin_ang;
       velX = Square.Cannon.vel * cos_ang;
-    };
+    }
     if (weapon.inacc != 0) {
       const perpendicularX = -velY;
       const perpendicularY = velX;
-      for (let i = 0; i < weapon.projecMult; i++) { // there can only be multiple projectiles if there is an inaccuracy, because it would just act as 1 projectile if 100% accurate
-        projectileID ++;
+      for (let i = 0; i < weapon.projecMult; i++) {
+        // there can only be multiple projectiles if there is an inaccuracy, because it would just act as 1 projectile if 100% accurate
+        projectileID++;
         const projectile = document.createElement("div");
         projectile.className = "artillery";
-        projectile.id = projectileID
+        projectile.id = projectileID;
         projectile.style.left = Square.X - 2.5 + "px"; // 2.5 is projectile radius
         projectile.style.top = Square.Y - 2.5 + "px";
         document.getElementById("projectilecontainer").appendChild(projectile);
@@ -1056,15 +1207,16 @@ function makeprojectile(aiming = false) {
           elem: projectile,
           X: Square.X,
           Y: Square.Y,
-          Xvel: velX + perpendicularX*randomInacc,
-          Yvel: velY + perpendicularY*randomInacc,
+          Xvel: velX + perpendicularX * randomInacc,
+          Yvel: velY + perpendicularY * randomInacc,
           grounded: false,
           size: 5,
           dmg: weapon.dmg,
         });
       }
     }
-    if (weapon.inacc == 0) { // if weapon is inaccurate, projectile will be created in the for loop above
+    if (weapon.inacc == 0) {
+      // if weapon is inaccurate, projectile will be created in the for loop above
       artillery.push({
         id: projectileID,
         elem: singleProjectile,
@@ -1087,7 +1239,8 @@ function projectilemove() {
   for (let i = 0; i < len; i++) {
     const projectile = projectiles[i];
     //console.log(projectile.style.left.slice(0, -2));
-    projectile.style.left = (Number(projectile.style.left.slice(0,-2)) + Square.speed) + "px"; // slice removes "px" to make it a number
+    projectile.style.left =
+      Number(projectile.style.left.slice(0, -2)) + Square.speed + "px"; // slice removes "px" to make it a number
   }
 
   // for artillery:
@@ -1095,24 +1248,30 @@ function projectilemove() {
   for (let i = 0; i < len2; i++) {
     const projectile = artillery[i];
     projectile.X += projectile.Xvel * scale;
-    projectile.elem.style.left = projectile.X - projectile.size/2 + "px";
+    projectile.elem.style.left = projectile.X - projectile.size / 2 + "px";
     if (mode) {
-      gravity(projectile)
+      gravity(projectile);
     } else {
       // gravity() incorporates Y velocity, so change in Y has to be calculated separately when not using gravity()
       projectile.Y += projectile.Yvel * scale;
-      projectile.elem.style.top = projectile.Y - projectile.size/2 + "px";
+      projectile.elem.style.top = projectile.Y - projectile.size / 2 + "px";
     }
   }
 }
 
-function makeItem(itemName, X = Math.random() * 400, Y = Math.random() * 440, nameOverride, isUnique = true, quantity = 1) {
+function makeItem(
+  itemName,
+  X = Math.random() * 400,
+  Y = Math.random() * 440,
+  nameOverride = undefined,
+  quantity = 1,
+  uniqueOverride = undefined
+) {
   let name;
   if (nameOverride) {
     name = nameOverride;
   } else {
-    itemID++;
-    name = itemName + "#" + itemID;
+    name = `${itemName}#${++itemID}`;
   }
   const item = document.createElement("div");
   item.className = "generic-item";
@@ -1122,11 +1281,12 @@ function makeItem(itemName, X = Math.random() * 400, Y = Math.random() * 440, na
   Main.appendChild(item);
   universe.items[name] = {
     name: itemName,
+    idname: name,
     elem: item,
     X: X,
     Y: Y,
     size: 10,
-    unique: isUnique,
+    unique: uniqueOverride || (itemdb[itemName] || itemdb.example).unique,
     mult: quantity,
   };
 }
@@ -1137,71 +1297,123 @@ function pickItem(obj = Square) {
       value.elem.remove();
       quantity = value.mult || 1;
       delete universe.items[key];
-      if (value.unique) {
-        inventoryItems[key] = value;
-      } else {
-        if (inventoryItems[value.name]) {
-          inventoryItems[value.name].mult += quantity;
-        } else { // if the item is not in the inventory, add it
-          inventoryItems[value.name] = value;
-          inventoryItems[value.name].mult = quantity;
-        }
-      }
+      addToStorage(inventoryItems, value, quantity);
       return; // only 1 item picked up at a time
     }
   }
 }
 
 function dropItem(itemname, quantity = 1, objOrigin = Square) {
-  if (quantity == 0) {return}; // if 0 items will be dropped, end function early
+  if (quantity == 0) {
+    return;
+  } // if 0 items will be dropped, end function early
   const item = inventoryItems[itemname];
-  console.log(item,itemname); //debug
-  if (item) { // if it exists
+  console.log(item, itemname); //debug
+  if (item) {
+    // if it exists
     if (item.unique) {
       // if unique, delete and make into element
-      delete inventoryItems[itemname];
+      subtractFromStorage(inventoryItems, itemname, quantity);
       makeItem(itemname.split("#")[0], objOrigin.X, objOrigin.Y, itemname); // name has to be defined for item pickup to work, so gets defined along with override
     } else {
       // if not unique, remove quantity and make into element with quantity
       if (inventoryItems[item.name].mult < quantity) {
-        makeItem(item.name, objOrigin.X, objOrigin.Y, undefined, false, inventoryItems[item.name].mult);
-        delete inventoryItems[item.name];
+        makeItem(
+          item.name,
+          objOrigin.X,
+          objOrigin.Y,
+          undefined,
+          inventoryItems[item.name].mult
+        );
+        subtractFromStorage(inventoryItems, itemname, inventoryItems[item.name].mult);
         return; // return so that the item is not dropped again
       }
-      inventoryItems[item.name].mult -= quantity;
-      if (inventoryItems[item.name].mult <= 0) {
-        delete inventoryItems[item.name];
-      }
-      makeItem(item.name, objOrigin.X, objOrigin.Y, undefined, false, quantity); // key name is not overridden so that it can exist twice with unique IDs
+      subtractFromStorage(inventoryItems, itemname, quantity);
+      makeItem(item.name, objOrigin.X, objOrigin.Y, undefined, quantity); // key name is not overridden so that it can exist twice with unique IDs
+    }
+  }
+}
+
+function addToStorage(storage = inventoryItems, item, quantity) {
+  
+  const storedItem = storage[item.name.split("#")[0]];
+  if (storedItem) {
+    // if item exists in storage, add quantity
+    storedItem.mult += quantity;
+  } else if (item.unique) {
+    // if item is unique, add it
+    storage[item.idname] = item;
+  } else {
+    // if item does not exist in storage, add it
+    storage[item.name] = item; // assumes that item.mult == quantity
+  }
+}
+
+function subtractFromStorage(storage = inventoryItems, itemName, quantity) {
+  //console.log(factoryName, universe.machines, universe.machines[factoryName]);
+  const item = storage[itemName];
+  if (!item) {
+    return;
+  } // if item doesn't exist, return
+  if (item.unique) {
+    // if unique, delete
+    delete storage[itemName];
+  } else {
+    // if not unique, first check if subtraction would have remainder
+    if (item.mult < quantity) {
+      delete storage[itemName];
+      return;
+    }
+    // then remove quantity and then delete if 0 or less quantity left
+    item.mult -= quantity;
+    if (item.mult <= 0) {
+      delete storage[itemName];
     }
   }
 }
 
 function assembleItem(itemName, storage = inventoryItems) {
   const assemblydata = assemblydb[itemName];
-  if (!assemblydata) {return}; // if item cannot be assembled, return
+  if (!assemblydata) {
+    return;
+  } // if item cannot be assembled, return
   Object.entries(assemblydata).forEach(([name, ingredient]) => {
-    if ((storage[name] || {mult:0}).mult < ingredient.mult) {return}; // if there is not enough of any ingredient, return
+    if ((storage[name] || { mult: 0 }).mult < ingredient.mult) {
+      return;
+    } // if there is not enough of any ingredient, return
   });
 
-  // remove ingredients and add new item:
-  
+  Object.entries(assemblydata).forEach(([name, ingredient]) => {
+    // remove amount of ingredients
+    subtractFromStorage(storage, name, ingredient.mult);
+  });
+  addToStorage(storage, {
+    name: `${itemName}#${++itemID}`,
+    size: 10,
+    unique: itemdb[itemName].unique,
+    mult: 1,
+  });
 }
 
-function placeMachine(name, fromInventory = true,  objOrigin = Square, dontOverrideID = false) {
+function placeMachine(
+  name,
+  fromInventory = true,
+  objOrigin = Square,
+  dontOverrideID = false
+) {
+  // check if item is in inventory, if it isn't don't place
   if (fromInventory) {
     if (inventoryItems[name]) {
-      delete inventoryItems[name];
+      subtractFromStorage(inventoryItems, name, 1);
     } else {
-      return // return if not in inventory
+      return; // return if not in inventory
     }
   }
-  let machineName
+  let machineName;
   if (dontOverrideID) {
-    itemID++;
-    machineName = name + "#" + itemID;
+    machineName = `${itemName}#${++itemID}`;
   } else {
-    machineName = name
+    machineName = name;
   }
   const item = document.createElement("div");
   item.className = "generic-machine";
@@ -1254,67 +1466,83 @@ function runFactory(factory) {
 */
 
 function setFactoryProcessIn_Out(factory, processName) {
+  if (factory.in_outProcesses[processName]) {
+    return;
+  } // if already running return
   console.log("process started " + processName);
-  const factoryName = (factory.name).split("#")[0]; // removes the id from the factory name
+  const factoryName = factory.name.split("#")[0]; // removes the id from the factory name
   const factorydata = itemdb[factoryName];
   const factoryStorage = factory.storage;
   const inOut = factorydata.in_out[processName];
-  if (inOut.other_required.length && inOut.byproducts.length) { // if byproducts or other required exist, use modified code
+  if (inOut.other_required.length && inOut.byproducts.length) {
+    // if byproducts or other required exist, use modified code
     // not implemented (subract all inputs, add all outputs)
-
     // implement for out_free as well
   } else {
     factory.in_outProcesses[processName] = setInterval(() => {
-      if (!factoryStorage[inOut.in] || factoryStorage[inOut.in].quantity < inOut.in_amount) { // if process cannot be sustained, end process
+      if (
+        !factoryStorage[inOut.in] ||
+        factoryStorage[inOut.in].quantity < inOut.in_amount
+      ) {
+        // if process cannot be sustained, end process
         clearInterval(factory.in_outProcesses[processName]);
         console.log("process ended " + processName);
         return;
-      };
-      subtractFactoryStorage(factory.name, inOut.in, inOut.in_amount); // subtract input, add output
-      addFactoryStorage(factory.name, {name: inOut.out, size: 10, unique: itemdb[inOut.out].unique, mult: inOut.out_amount} ,inOut.out_amount)
+      }
+      // subtract input, add output
+      subtractFactoryStorage(factory.name, inOut.in, inOut.in_amount);
+      addFactoryStorage(
+        factory.name,
+        {
+          name: inOut.out,
+          size: 10,
+          unique: itemdb[inOut.out].unique,
+          mult: inOut.out_amount,
+        },
+        inOut.out_amount
+      );
     }, inOut.interval);
   }
 }
 
 function setFactoryProcessOut_Free(factory, processName) {
-  console.log("process started " + processName)
-  const factoryName = (factory.name).split("#")[0]; // removes the id from the factory name
+  if (factory.out_freeProcesses[processName]) {
+    return;
+  } // if already running return
+  console.log("process started " + processName);
+  const factoryName = factory.name.split("#")[0]; // removes the id from the factory name
   const factorydata = itemdb[factoryName];
   const factoryStorage = factory.storage;
   const outFree = factorydata.out_free[processName];
   factory.out_freeProcesses[processName] = setInterval(() => {
-    addFactoryStorage(factory.name, {name: outFree.out, size: 10, unique: itemdb[outFree.out].unique, mult: 1} ,1)
+    addFactoryStorage(
+      factory.name,
+      {
+        name: outFree.out,
+        size: 10,
+        unique: itemdb[outFree.out].unique,
+        mult: 1,
+      },
+      1
+    );
   }, outFree.interval);
 }
 
 function addFactoryStorage(factoryName = "magic_smelter#1", item, quantity) {
-  const storedItem = universe.machines[factoryName].storage[item.name];
-  if (storedItem) { // if item exists in storage, add quantity
-    universe.machines[factoryName].storage[item.name].mult += quantity;
-  } else { // if item does not exist in storage, add it
-    universe.machines[factoryName].storage[item.name] = item; // assumes that item.mult == quantity
-  }
+  addToStorage(universe.machines[factoryName].storage, item, quantity);
 }
 
-function subtractFactoryStorage(factoryName = "magic_smelter#1", itemName, quantity) {
+function subtractFactoryStorage(
+  factoryName = "magic_smelter#1",
+  itemName,
+  quantity
+) {
   //console.log(factoryName, universe.machines, universe.machines[factoryName]);
-  const item = universe.machines[factoryName].storage[itemName];
-  if (item) { // if it exists
-    if (item.unique) {
-      // if unique, delete
-      delete universe.machines[factoryName].storage[itemName];
-    } else {
-      // if not unique, remove quantity and delete if 0 or less quantity left
-      if (universe.machines[factoryName].storage[itemName].mult < quantity) {
-        delete universe.machines[factoryName].storage[itemName];
-        return;
-      }
-      universe.machines[factoryName].storage[itemName].mult -= quantity;
-      if (universe.machines[factoryName].storage[itemName].mult <= 0) {
-        delete universe.machines[factoryName].storage[itemName];
-      }
-    }
-  }
+  subtractFromStorage(
+    universe.machines[factoryName].storage,
+    itemName,
+    quantity
+  );
 }
 
-setInterval(loop, 1000/loopfreq);
+setInterval(loop, 1 / loopfreq);

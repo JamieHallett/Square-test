@@ -147,7 +147,9 @@
       <button onclick="setFactoryProcessIn_Out(storageUI.getStorage(), 'iron_ore')">Start up magic_smelter#1</button> <br>
       <button onclick="addFactoryStorage('magic_smelter#1', {name: 'iron_ore', size: 10, unique: false, mult: 1}, 1)">Add iron ore to magic_smelter#1</button> <br>
       <button onclick="setFactoryProcessOut_Free(storageUI.getStorage(), 'iron_ore')">Start up magic_iron_ore_machine#1</button> <br>
-
+      <button onclick="makeItem('weapon_c_part1'); makeItem('weapon_c_part2'); makeItem('weapon_c_part3');">Spawn weapon C parts</button> <br>
+      <button onclick="assembleItem('weapon_c')">Assemble weapon C</button> <br>
+      <button onclick="">more debug buttons coming soon</button> <br>
     </div>
 
     <div id="storageaccessUI" class="sidenav">
@@ -160,16 +162,9 @@
     </div>
 
     <div id="inventory">
+      assembly: <br>
+      <div id="assemblybuttons"></div>
       items: <br>
-      weapon "a" <br>
-      weapon "b" <br>
-      weapon "c" <br>
-      weapon "d" <br>
-      weapon "e" <br>
-      weapon ??? <br>
-      weapon ??? (again) <br>
-      (weapon e does exist) <br>
-      real items: <br>
       <div id="itemtable" class="tablecontainer"></div>
       old items (raw json) (close and open inventory to refresh): <br>
       <pre id="itemcontainer"></pre>
