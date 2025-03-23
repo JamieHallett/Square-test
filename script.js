@@ -171,6 +171,12 @@ const inventoryItems = {
     unique: true,
     mult: 1,
   },
+  cube: {
+    name: "cube",
+    unique: false,
+    mult: 1,
+    material: "tungsten",
+  },
 };
 const universe = {
   get Square() {
@@ -482,6 +488,15 @@ const itemdb = {
     melting_point: 3143,
   },
 
+  cube: {
+    title: "{material} Cube",
+    desc: "A cube made of {material}.",
+    unique: false,
+    type: "shape",
+    tags: ["format_title"],
+    methods: ["item_drop"],
+  },
+
   magic_smelter: {
     title: "magic smelter",
     desc: "smelts items without electricity or fuel, converting all of the input's mass to the output",
@@ -691,8 +706,20 @@ function updInventoryTable(json = inventoryItems, containername = "itemtable") {
 
   // this is how each column of the table body is created
   const columnFuncs = [
-    (name) => (itemdb[name] || itemdb.example).title,
-    (name) => (itemdb[name] || itemdb.example).desc,
+    (name) =>
+      itemdb[name].tags.includes("format_title")
+        ? (itemdb[name] || itemdb.example).title.replaceAll(
+            "{material}",
+            itemdb[json[name].material].title
+          )
+        : (itemdb[name] || itemdb.example).title,
+    (name) =>
+      itemdb[name].tags.includes("format_title")
+        ? (itemdb[name] || itemdb.example).desc.replaceAll(
+            "{material}",
+            itemdb[json[name].material].title
+          )
+        : (itemdb[name] || itemdb.example).desc,
     (name) => (json[name] || { mult: "-" }).mult, // if item is unique, name will not be in json and so mult will be "-"
     (name, idname) => {
       // create button(s) for each action, put in container, return container
@@ -1325,7 +1352,11 @@ function dropItem(itemname, quantity = 1, objOrigin = Square) {
           undefined,
           inventoryItems[item.name].mult
         );
-        subtractFromStorage(inventoryItems, itemname, inventoryItems[item.name].mult);
+        subtractFromStorage(
+          inventoryItems,
+          itemname,
+          inventoryItems[item.name].mult
+        );
         return; // return so that the item is not dropped again
       }
       subtractFromStorage(inventoryItems, itemname, quantity);
@@ -1335,7 +1366,6 @@ function dropItem(itemname, quantity = 1, objOrigin = Square) {
 }
 
 function addToStorage(storage = inventoryItems, item, quantity) {
-  
   const storedItem = storage[item.name.split("#")[0]];
   if (storedItem) {
     // if item exists in storage, add quantity
