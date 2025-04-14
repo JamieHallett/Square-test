@@ -145,7 +145,7 @@ const storageUI = {
     }
   },
 };
-const inventoryItems = {
+const OLDinventoryItems = {
   ammo_a: {
     name: "ammo_a",
     unique: false,
@@ -178,6 +178,59 @@ const inventoryItems = {
     material: "tungsten",
   },
 };
+///*
+const inventoryItems = {
+  ammo_a: {
+    null: {
+      name: "ammo_a",
+      unique: false,
+      mult: 20,
+    },
+  },
+  ammo_b: {
+    null: {
+      name: "ammo_b",
+      unique: false,
+      mult: 60,
+    },
+  },
+  ammo_c: {
+    null: {
+      name: "ammo_c",
+      unique: false,
+      mult: 90,
+    },
+  },
+  ammo_d: {
+    null: {
+      name: "ammo_d",
+      unique: false,
+      mult: 20,
+    },
+  },
+  weapon_c: {
+    null: {
+      name: "weapon_c",
+      unique: true,
+      mult: 1,
+    },
+  },
+  cube: {
+    tungsten: {
+      name: "cube",
+      unique: false,
+      mult: 1,
+      material: "tungsten",
+    },
+    tungsten_carbide: {
+      name: "cube",
+      unique: false,
+      mult: 1,
+      material: "tungsten_carbide",
+    },
+  },
+};
+//*/
 const universe = {
   get Square() {
     return Square;
@@ -570,11 +623,16 @@ const itemdb = {
   },
 };
 const itemMethodDB = {
-  machine_place: function (name, obj) {
-    placeMachine(name, true, obj);
+  machine_place: function (name, origin) {
+    placeMachine(name, true, origin);
   },
-  item_drop: function (name, obj) {
-    dropItem(name, Number(prompt("Enter amount to drop:")), obj);
+  item_drop: function (name, origin, item) {
+    dropItem(
+      name,
+      Number(prompt("Enter amount to drop:")),
+      origin,
+      item.material
+    );
   },
 };
 const assemblydb = {
@@ -694,7 +752,26 @@ function closeInventory() {
   document.getElementById("inventory").style.visibility = "hidden";
 }
 
+function storageToArray(storage) {
+  /* storage looks like this:
+  {
+    cube: {iron: ironcube, lead: leadcube, ...},
+    sphere: {iron: ironsphere, lead: leadsphere, ...},
+    ...
+  }
+  */
+  const arr = [];
+  for (const [name, items] of Object.entries(storage)) {
+    for (const [name, item] of Object.entries(items)) {
+      arr.push(item);
+    }
+  }
+  return arr;
+}
+
 function updInventoryTable(json = inventoryItems, containername = "itemtable") {
+  json = storageToArray(json);
+
   // Get the container element where the table will be inserted
   let container = document.getElementById(containername);
 
@@ -706,22 +783,22 @@ function updInventoryTable(json = inventoryItems, containername = "itemtable") {
 
   // this is how each column of the table body is created
   const columnFuncs = [
-    (name) =>
+    (name, item) =>
       itemdb[name].tags.includes("format_title")
         ? (itemdb[name] || itemdb.example).title.replaceAll(
             "{material}",
-            itemdb[json[name].material].title
+            itemdb[item.material].title
           )
         : (itemdb[name] || itemdb.example).title,
-    (name) =>
+    (name, item) =>
       itemdb[name].tags.includes("format_title")
         ? (itemdb[name] || itemdb.example).desc.replaceAll(
             "{material}",
-            itemdb[json[name].material].title
+            itemdb[item.material].title
           )
         : (itemdb[name] || itemdb.example).desc,
-    (name) => (json[name] || { mult: "-" }).mult, // if item is unique, name will not be in json and so mult will be "-"
-    (name, idname) => {
+    (name, item) => (item || { mult: "-" }).mult, // if item is unique, name will not be in json and so mult will be "-"
+    (name, item) => {
       // create button(s) for each action, put in container, return container
       const btncontainer = document.createElement("div");
       /*const btn = document.createElement("button");
@@ -736,13 +813,13 @@ function updInventoryTable(json = inventoryItems, containername = "itemtable") {
         btn.innerText = methodName;
         btncontainer.appendChild(btn);
         btn.onclick = function () {
-          itemMethodDB[methodName](idname || name, Square); // uses name with id if that exists
+          itemMethodDB[methodName](name, Square, item); // uses name with id if that exists
           updInventoryTable(); // update inventory table in case something changes
         };
       });
       return btncontainer;
     },
-    (name, idname) => idname || name, // uses name with id if that exists
+    (name) => name, // uses name with id if that exists
   ];
 
   // Create the header element
@@ -759,11 +836,11 @@ function updInventoryTable(json = inventoryItems, containername = "itemtable") {
   table.append(tr); // Append the header to the table
 
   // Loop through the JSON data and create table rows
-  Object.entries(json).forEach((key_item) => {
+  json.forEach((item) => {
     let tr = document.createElement("tr");
     // Loop through the values and create table cells
     columnFuncs.forEach((func) => {
-      const content = func(key_item[1].name.split("#")[0], key_item[0]); // The functions return the content to be displayed in each cell
+      const content = func(item.name.split("#")[0], item); // The functions return the content to be displayed in each cell
       if (["string", "number"].includes(typeof content)) {
         const td = document.createElement("td");
         td.innerText = content; // Set the text of the cell to the value returned by the function
@@ -1292,7 +1369,8 @@ function makeItem(
   Y = Math.random() * 440,
   nameOverride = undefined,
   quantity = 1,
-  uniqueOverride = undefined
+  uniqueOverride = undefined,
+  material
 ) {
   let name;
   if (nameOverride) {
@@ -1315,6 +1393,7 @@ function makeItem(
     size: 10,
     unique: uniqueOverride || (itemdb[itemName] || itemdb.example).unique,
     mult: quantity,
+    material: material,
   };
 }
 
@@ -1330,74 +1409,101 @@ function pickItem(obj = Square) {
   }
 }
 
-function dropItem(itemname, quantity = 1, objOrigin = Square) {
+function dropItem(itemname, quantity = 1, objOrigin = Square, material) {
   if (quantity == 0) {
     return;
   } // if 0 items will be dropped, end function early
-  const item = inventoryItems[itemname];
-  console.log(item, itemname); //debug
+  const item = inventoryItems[itemname][material || "null"];
+  console.log("dropped item:", item, itemname, material); //debug
   if (item) {
     // if it exists
     if (item.unique) {
       // if unique, delete and make into element
       subtractFromStorage(inventoryItems, itemname, quantity);
-      makeItem(itemname.split("#")[0], objOrigin.X, objOrigin.Y, itemname); // name has to be defined for item pickup to work, so gets defined along with override
+      makeItem(
+        itemname.split("#")[0],
+        objOrigin.X,
+        objOrigin.Y,
+        itemname,
+        1,
+        true,
+        item.material
+      ); // name has to be defined for item pickup to work, so gets defined along with override
     } else {
       // if not unique, remove quantity and make into element with quantity
-      if (inventoryItems[item.name].mult < quantity) {
+      if (item.mult < quantity) {
         makeItem(
           item.name,
           objOrigin.X,
           objOrigin.Y,
           undefined,
-          inventoryItems[item.name].mult
+          item.mult,
+          false,
+          item.material
         );
-        subtractFromStorage(
-          inventoryItems,
-          itemname,
-          inventoryItems[item.name].mult
-        );
+        subtractFromStorage(inventoryItems, itemname, item.mult, material);
         return; // return so that the item is not dropped again
       }
-      subtractFromStorage(inventoryItems, itemname, quantity);
-      makeItem(item.name, objOrigin.X, objOrigin.Y, undefined, quantity); // key name is not overridden so that it can exist twice with unique IDs
+      subtractFromStorage(inventoryItems, itemname, quantity, material);
+      makeItem(
+        item.name,
+        objOrigin.X,
+        objOrigin.Y,
+        undefined,
+        quantity,
+        false,
+        item.material
+      ); // key name is not overridden so that it can exist twice with unique IDs
     }
   }
 }
 
 function addToStorage(storage = inventoryItems, item, quantity) {
-  const storedItem = storage[item.name.split("#")[0]];
+  // find item in storage
+  const storedItem = storage[item.name][item.material || "null"];
+
   if (storedItem) {
     // if item exists in storage, add quantity
     storedItem.mult += quantity;
   } else if (item.unique) {
     // if item is unique, add it
-    storage[item.idname] = item;
+    if (!storage[item.name]) {
+      storage[item.name] = {};
+    }
+    storage[item.name][item.material || "null"] = item;
   } else {
     // if item does not exist in storage, add it
-    storage[item.name] = item; // assumes that item.mult == quantity
+    if (!storage[item.name]) {
+      storage[item.name] = {};
+    }
+    storage[item.name][item.material || "null"] = item; // assumes that item.mult == quantity
   }
 }
 
-function subtractFromStorage(storage = inventoryItems, itemName, quantity) {
+function subtractFromStorage(
+  storage = inventoryItems,
+  itemName,
+  quantity,
+  material
+) {
   //console.log(factoryName, universe.machines, universe.machines[factoryName]);
-  const item = storage[itemName];
+  const item = storage[itemName][material || "null"];
   if (!item) {
     return;
   } // if item doesn't exist, return
   if (item.unique) {
     // if unique, delete
-    delete storage[itemName];
+    delete storage[itemName][material || "null"];
   } else {
     // if not unique, first check if subtraction would have remainder
     if (item.mult < quantity) {
-      delete storage[itemName];
+      delete storage[itemName][material || "null"];
       return;
     }
     // then remove quantity and then delete if 0 or less quantity left
     item.mult -= quantity;
     if (item.mult <= 0) {
-      delete storage[itemName];
+      delete storage[itemName][material || "null"];
     }
   }
 }
