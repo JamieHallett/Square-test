@@ -1,4 +1,4 @@
-http://replit.com/@jamiehallett1/Square-test
+https://replit.com/@jamiehallett1/Square-test
 
 # Square Test
 
