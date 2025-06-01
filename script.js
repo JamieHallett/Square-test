@@ -229,6 +229,36 @@ const inventoryItems = {
       material: "tungsten_carbide",
     },
   },
+  weapon_c_part1: {
+    iron: {
+      name: "weapon_c_part1",
+      unique: false,
+      mult: 1,
+      material: "iron",
+      attachments: {
+        upper: {
+          /*
+          weapon_c_part2: {
+            name: "weapon_c_part2",
+            unique: false,
+            mult: 1,
+            material: "iron",
+            attachments: {
+              barrel: {
+                weapon_c_part3: {
+                  name: "weapon_c_part3",
+                  unique: false,
+                  mult: 1,
+                  material: "iron",
+                },
+              },
+            },
+          },
+          */
+        },
+      },
+    },
+  },
 };
 //*/
 const universe = {
@@ -385,33 +415,37 @@ const itemdb = {
   },
   weapon_c_part1: {
     title: "Weapon C part 1",
-    desc: "A part of weapon C.",
+    desc: "The basis of weapon C.",
     unique: false,
     type: "construct",
-    tags: [],
+    tags: ["takes_attachments", "weapon"],
     methods: ["item_drop"],
     mass: 1,
     volume: 0.000_1,
+    attachpoints: ["upper"],
   },
   weapon_c_part2: {
     title: "Weapon C part 2",
     desc: "A part of weapon C.",
     unique: false,
     type: "construct",
-    tags: [],
+    tags: ["takes_attachments", "attachment"],
     methods: ["item_drop"],
     mass: 1,
     volume: 0.000_25,
+    attachlocations: ["upper"],
+    attachpoints: ["barrel"],
   },
   weapon_c_part3: {
     title: "Weapon C part 3",
     desc: "A part of weapon C.",
     unique: false,
-    type: "construct",
-    tags: [],
+    type: "shape",
+    tags: ["attachment"],
     methods: ["item_drop"],
     mass: 0.92,
     volume: 0.000_05,
+    attachlocations: ["barrel"],
   },
   ammo_c: {
     title: "Ammo C",
@@ -548,6 +582,7 @@ const itemdb = {
     type: "shape",
     tags: ["format_title"],
     methods: ["item_drop"],
+    volume: 0.000_125,
   },
 
   magic_smelter: {
@@ -1529,6 +1564,35 @@ function assembleItem(itemName, storage = inventoryItems) {
     unique: itemdb[itemName].unique,
     mult: 1,
   });
+}
+
+function addToAttachments(attachPlatform, attachLocation, item) {
+  // find item that is attached
+  const attachList = attachPlatform.attachments;
+  if (!attachList) {
+    attachPlatform.attachments = {};
+  }
+  const attachNode = attachList[attachLocation];
+  
+  // if no item is attached, attach it
+  attachList[attachLocation] = item;
+}
+
+function removeFromAttachments(attachPlatform, attachLocation) {
+  // find item that is attached
+  const attachList = attachPlatform.attachments;
+  if (!attachList) {
+    attachPlatform.attachments = {};
+  }
+
+  const attachNode = attachList[attachLocation];
+  if (attachNode) {
+    // if an item is attached, remove it
+    const removedItem = attachNode;
+    attachList[attachLocation] = undefined;
+    return removedItem; // return the item that was removed
+  }
+  return;
 }
 
 function placeMachine(
